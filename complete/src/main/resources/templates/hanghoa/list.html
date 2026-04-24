@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📦 Hàng hóa – Smart Warehouse</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h2>📦 Quản lý Hàng hóa</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Hàng hóa</span>
+        </div>
+      </div>
+      <div class="flex-gap">
+        <a class="btn btn-success" th:href="@{/hanghoa/add}">
+          <i class="bi bi-plus-lg"></i> Thêm hàng mới
+        </a>
+        <a class="btn btn-primary" th:href="@{/baocao/tonkho}">
+          <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+        </a>
+      </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="search-bar">
+      <div class="inp-search-wrap">
+        <i class="bi bi-search"></i>
+        <input class="inp-search" id="search-inp" type="text" placeholder="Tìm theo tên, mã hàng, phân loại..."/>
+      </div>
+      <select class="filter-select" id="filter-loai" onchange="filterByCategory()">
+        <option value="">Tất cả phân loại</option>
+        <option value="Điện tử">⚡ Điện tử</option>
+        <option value="Thực phẩm">🍎 Thực phẩm</option>
+        <option value="Tiêu dùng">🛒 Tiêu dùng</option>
+        <option value="Khác">📦 Khác</option>
+      </select>
+      <select class="filter-select" id="filter-tonkho" onchange="filterByStock()">
+        <option value="">Tất cả trạng thái</option>
+        <option value="low">⚠ Tồn kho thấp</option>
+        <option value="ok">✅ Bình thường</option>
+      </select>
+      <span style="margin-left:auto;font-size:12px;color:var(--txt3)">
+        Hiển thị <strong id="row-count"
+          th:text="${danhSachHang != null ? danhSachHang.size() : 0}">0</strong> mặt hàng
+      </span>
+    </div>
+
+    <!-- Table Card -->
+    <div class="data-card">
+      <!-- Khi không có dữ liệu -->
+      <div th:if="${#lists.isEmpty(danhSachHang)}"
+           style="text-align:center;padding:50px;color:var(--txt2)">
+        <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:12px;color:var(--txt3)"></i>
+        <h5 style="margin-bottom:6px">Chưa có hàng hóa nào</h5>
+        <p style="font-size:13px;color:var(--txt3)">Nhấn "Thêm hàng mới" để bắt đầu quản lý kho.</p>
+      </div>
+
+      <div style="overflow-x:auto" th:unless="${#lists.isEmpty(danhSachHang)}">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Mã hàng</th>
+              <th>Tên hàng</th>
+              <th>Phân loại</th>
+              <th>Tồn kho</th>
+              <th>Đơn giá</th>
+              <th>Hạn SD</th>
+              <th>Vị trí</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!--
+              th:each="h, iStat : ${danhSachHang}"
+              iStat.count = số thứ tự bắt đầu từ 1
+              iStat.index = index bắt đầu từ 0
+            -->
+            <tr th:each="h, iStat : ${danhSachHang}"
+                th:attr="data-loai=${h.phanLoai}, data-stock=${h.soLuongTon < h.soLuongToiThieu ? 'low' : 'ok'}">
+              <td class="text-muted" th:text="${iStat.count}">1</td>
+              <td>
+                <code class="mono" th:text="${h.maHang}">HH001</code>
+              </td>
+              <td>
+                <strong th:text="${h.tenHang}">Tên hàng</strong>
+                <div style="font-size:11px;color:var(--txt3)" th:text="${h.maNhaCungCap}">NCC001</div>
+              </td>
+              <td>
+                <span th:switch="${h.phanLoai}">
+                  <span th:case="'Điện tử'"   class="badge badge-blue">⚡ Điện tử</span>
+                  <span th:case="'Thực phẩm'" class="badge badge-green">🍎 Thực phẩm</span>
+                  <span th:case="'Tiêu dùng'" class="badge badge-warn">🛒 Tiêu dùng</span>
+                  <span th:case="*"            class="badge badge-draft" th:text="${h.phanLoai}">Khác</span>
+                </span>
+              </td>
+              <td>
+                <div class="flex-gap">
+                  <!-- Tô đỏ nếu tồn kho thấp hơn ngưỡng tối thiểu -->
+                  <span th:class="${h.soLuongTon < h.soLuongToiThieu} ? 'text-red fw-bold' : 'text-green fw-bold'"
+                        th:text="${h.soLuongTon}">0</span>
+                  <span class="text-muted" style="font-size:12px"
+                        th:text="'/' + ${h.soLuongToiThieu}">/ 10</span>
+                  <!-- Badge cảnh báo khi tồn kho thấp -->
+                  <span class="badge badge-low" th:if="${h.soLuongTon < h.soLuongToiThieu}">Thấp</span>
+                </div>
+              </td>
+              <td>
+                <!-- th:text dùng utility class #numbers.formatDecimal để format số -->
+                <span th:text="${#numbers.formatDecimal(h.donGia, 0, 'COMMA', 0, 'POINT') + '₫'}">0₫</span>
+              </td>
+              <td>
+                <!-- Tô cam nếu hạn sử dụng trong vòng 30 ngày -->
+                <span th:if="${h.hanSuDung != null and !#strings.isEmpty(h.hanSuDung)}"
+                      th:text="${h.hanSuDung}" class="text-muted">—</span>
+                <span th:unless="${h.hanSuDung != null and !#strings.isEmpty(h.hanSuDung)}"
+                      class="text-muted">—</span>
+              </td>
+              <td>
+                <span class="badge badge-draft" th:text="${h.maViTri}">VT001</span>
+              </td>
+              <td>
+                <div class="flex-gap">
+                  <a class="btn btn-warning btn-sm"
+                     th:href="@{/hanghoa/edit/{id}(id=${h.maHang})}"
+                     title="Sửa">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <button class="btn btn-danger btn-sm"
+                          th:onclick="'confirmDelete(\'' + ${h.tenHang} + '\', \'' + @{/hanghoa/delete/{id}(id=${h.maHang})} + '\')'"
+                          title="Xóa">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" th:unless="${#lists.isEmpty(danhSachHang)}">
+        <span class="pg-info">
+          Tổng <strong th:text="${danhSachHang.size()}">0</strong> mặt hàng
+        </span>
+        <div class="pg-btns">
+          <button class="pg-btn">‹</button>
+          <button class="pg-btn active">1</button>
+          <button class="pg-btn">›</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Shared fragments -->
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: deleteModal}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+
+<script>
+  /* Filter theo phân loại và tồn kho kết hợp */
+  function applyFilters() {
+    const loai   = document.getElementById('filter-loai').value.toLowerCase();
+    const stock  = document.getElementById('filter-tonkho').value;
+    const search = (document.getElementById('search-inp').value || '').toLowerCase();
+    const rows   = document.querySelectorAll('#table-body tr');
+    let count = 0;
+    rows.forEach(row => {
+      const rowLoai  = (row.dataset.loai  || '').toLowerCase();
+      const rowStock = row.dataset.stock  || '';
+      const rowText  = row.textContent.toLowerCase();
+      const matchLoai  = !loai  || rowLoai.includes(loai);
+      const matchStock = !stock || rowStock === stock;
+      const matchSearch= !search|| rowText.includes(search);
+      const show = matchLoai && matchStock && matchSearch;
+      row.style.display = show ? '' : 'none';
+      if (show) count++;
+    });
+    document.getElementById('row-count').textContent = count;
+  }
+  function filterByCategory() { applyFilters(); }
+  function filterByStock()    { applyFilters(); }
+  document.getElementById('search-inp').addEventListener('input', applyFilters);
+</script>
+</body>
+</html>

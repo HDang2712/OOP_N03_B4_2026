@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+
+<nav class="sidebar" th:fragment="sidebar">
+
+  <!-- Logo / tên hệ thống -->
+  <div class="sb-brand">
+    <div class="sb-brand-icon">🏭</div>
+    <div>
+      <div class="sb-brand-name">SmartWarehouse</div>
+      <div class="sb-brand-sub">OOP Project · v2.0</div>
+    </div>
+  </div>
+
+  <!-- ── NHÓM: TỔNG QUAN ── -->
+  <div class="sb-section">Tổng quan</div>
+
+  <!--
+    th:classappend — thêm class "active" vào link nếu điều kiện đúng.
+    ${activePage} là biến Controller truyền sang để biết đang ở trang nào.
+    Ví dụ trong HomeController: model.addAttribute("activePage", "dashboard");
+  -->
+  <a class="sb-link" th:href="@{/dashboard}"
+     th:classappend="${activePage == 'dashboard'} ? 'active' : ''">
+    <i class="bi bi-speedometer2"></i> Dashboard
+  </a>
+
+  <!-- ── NHÓM: QUẢN LÝ KHO ── -->
+  <div class="sb-section">Quản lý kho</div>
+
+  <a class="sb-link" th:href="@{/hanghoa}"
+     th:classappend="${activePage == 'hanghoa'} ? 'active' : ''">
+    <i class="bi bi-box-seam"></i> Hàng hóa
+  </a>
+
+  <a class="sb-link" th:href="@{/nhacungcap}"
+     th:classappend="${activePage == 'nhacungcap'} ? 'active' : ''">
+    <i class="bi bi-building"></i> Nhà cung cấp
+  </a>
+
+  <a class="sb-link" th:href="@{/vitrikho}"
+     th:classappend="${activePage == 'vitrikho'} ? 'active' : ''">
+    <i class="bi bi-geo-alt"></i> Vị trí kho
+  </a>
+
+  <a class="sb-link" th:href="@{/phieunhap}"
+     th:classappend="${activePage == 'phieunhap'} ? 'active' : ''">
+    <i class="bi bi-download"></i> Phiếu nhập
+    <!--
+      th:if="${phieuNhapChoDuyet > 0}" — chỉ hiện badge khi có phiếu chờ.
+      ${phieuNhapChoDuyet} được truyền từ HomeController khi vào dashboard,
+      hoặc truyền qua session. Đây là cách sidebar luôn "biết" trạng thái thật.
+    -->
+    <span class="sb-badge yellow" th:if="${phieuNhapChoDuyet != null and phieuNhapChoDuyet > 0}"
+          th:text="${phieuNhapChoDuyet}">3</span>
+  </a>
+
+  <a class="sb-link" th:href="@{/phieuxuat}"
+     th:classappend="${activePage == 'phieuxuat'} ? 'active' : ''">
+    <i class="bi bi-upload"></i> Phiếu xuất
+    <span class="sb-badge red" th:if="${phieuXuatChoDuyet != null and phieuXuatChoDuyet > 0}"
+          th:text="${phieuXuatChoDuyet}">1</span>
+  </a>
+
+  <a class="sb-link" th:href="@{/canhbao}"
+     th:classappend="${activePage == 'canhbao'} ? 'active' : ''">
+    <i class="bi bi-bell"></i> Cảnh báo
+    <span class="sb-badge red" th:if="${tongCanhBao != null and tongCanhBao > 0}"
+          th:text="${tongCanhBao}">5</span>
+  </a>
+
+  <!-- ── NHÓM: QUẢN TRỊ (chỉ hiện với quản lý và admin) ── -->
+  <!--
+    th:if="${vaiTro == 'admin' or vaiTro == 'quan_ly'}"
+    ${vaiTro} lấy từ session qua SessionHelper.getVaiTro(session)
+    và được truyền vào model ở mỗi Controller với:
+    model.addAttribute("vaiTro", SessionHelper.getVaiTro(session));
+  -->
+  <div class="sb-section"
+       th:if="${vaiTro == 'admin' or vaiTro == 'quan_ly'}">
+    Quản trị
+  </div>
+
+  <a class="sb-link" th:href="@{/nhanvien}"
+     th:classappend="${activePage == 'nhanvien'} ? 'active' : ''"
+     th:if="${vaiTro == 'admin' or vaiTro == 'quan_ly'}">
+    <i class="bi bi-people"></i> Nhân viên
+  </a>
+
+  <a class="sb-link" th:href="@{/lichsu}"
+     th:classappend="${activePage == 'lichsu'} ? 'active' : ''"
+     th:if="${vaiTro == 'admin' or vaiTro == 'quan_ly'}">
+    <i class="bi bi-clock-history"></i> Lịch sử thao tác
+  </a>
+
+  <!-- Xuất báo cáo Excel — link trực tiếp đến BaoCaoController -->
+  <a class="sb-link" th:href="@{/baocao/tonkho}"
+     th:if="${vaiTro == 'admin' or vaiTro == 'quan_ly'}">
+    <i class="bi bi-file-earmark-excel"></i> Báo cáo Excel
+  </a>
+
+</nav>
+<!-- /sidebar fragment -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     FRAGMENT 2: TOPBAR
+     Tên fragment là "topbar"
+═══════════════════════════════════════════════════ -->
+<div class="topbar" th:fragment="topbar">
+
+  <!-- Tiêu đề trang hiện tại — Controller truyền ${pageTitle} -->
+  <div class="topbar-title">
+    <span th:text="${pageTitle}">Dashboard</span>
+    <small th:text="${pageSubtitle}">/ Tổng quan hệ thống</small>
+  </div>
+
+  <!-- Đồng hồ realtime -->
+  <span id="clock"></span>
+
+  <!-- Chuông cảnh báo — click vào đi đến trang cảnh báo -->
+  <a class="bell-wrap" th:href="@{/canhbao}" style="text-decoration:none">
+    <i class="bi bi-bell"></i>
+    <span class="bell-badge" th:if="${tongCanhBao != null and tongCanhBao > 0}"
+          th:text="${tongCanhBao}">5</span>
+  </a>
+
+  <!-- Thông tin người dùng đang đăng nhập -->
+  <div class="user-block">
+    <!--
+      ${currentUser.hoTen} — lấy từ model.addAttribute("currentUser", SessionHelper.getUser(session))
+      Hiển thị 2 ký tự đầu của tên làm avatar
+    -->
+    <div class="avatar"
+         th:text="${currentUser != null ? #strings.substring(currentUser.hoTen, 0, 2) : 'NV'}">
+      NV
+    </div>
+    <div>
+      <div class="user-name" th:text="${currentUser != null ? currentUser.hoTen : 'Người dùng'}">Nhân viên</div>
+      <div class="user-role">
+        <!--
+          Hiển thị badge vai trò với màu khác nhau tùy role.
+          th:switch + th:case — giống switch-case trong Java.
+        -->
+        <span th:switch="${vaiTro}">
+          <span th:case="'admin'"    class="badge badge-admin">ADMIN</span>
+          <span th:case="'quan_ly'"  class="badge badge-quanly">QUẢN LÝ</span>
+          <span th:case="*"          class="badge badge-nhanvien">NHÂN VIÊN</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nút đăng xuất — link đến AuthController.logout() -->
+  <a class="btn-logout" th:href="@{/logout}">
+    <i class="bi bi-box-arrow-right"></i> Đăng xuất
+  </a>
+
+</div>
+<!-- /topbar fragment -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     FRAGMENT 3: SCRIPTS CHUNG
+     Bao gồm đồng hồ và toast notification.
+     Mỗi trang gọi: th:replace="~{fragments/layout :: scripts}"
+═══════════════════════════════════════════════════ -->
+<div th:fragment="scripts">
+  <!-- Bootstrap Icons JS không cần — chỉ cần CSS link ở trên là đủ -->
+  <script>
+    /* ── Đồng hồ realtime ── */
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (el) el.textContent = new Date().toLocaleString('vi-VN');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    /* ── Toast notification ── */
+    /* Dùng khi cần show thông báo nhỏ ở góc màn hình */
+    let toastTimer;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      if (!el) return;
+      el.innerHTML = msg;
+      el.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    /* ── Tự động show flash message từ Thymeleaf ── */
+    /*
+      Khi Controller dùng redirectAttributes.addFlashAttribute("success", "..."),
+      Thymeleaf render div với id="flash-msg". Script này tự show toast tương ứng.
+    */
+    window.addEventListener('DOMContentLoaded', () => {
+      const flash = document.getElementById('flash-msg');
+      if (flash && flash.dataset.msg) {
+        showToast(flash.dataset.type === 'success' ? '✅ ' + flash.dataset.msg : '❌ ' + flash.dataset.msg);
+      }
+    });
+
+    /* ── Confirm xóa modal ── */
+    function openDeleteModal(name, deleteUrl) {
+      const modal = document.getElementById('delete-modal');
+      const nameEl = document.getElementById('delete-modal-name');
+      const confirmBtn = document.getElementById('delete-confirm-btn');
+      if (!modal) return;
+      nameEl.textContent = name;
+      confirmBtn.href = deleteUrl;
+      modal.classList.add('open');
+    }
+    function closeDeleteModal() {
+      const modal = document.getElementById('delete-modal');
+      if (modal) modal.classList.remove('open');
+    }
+  </script>
+</div>
+<!-- /scripts fragment -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     FRAGMENT 4: DELETE MODAL (dùng chung)
+     Gọi bằng: th:replace="~{fragments/layout :: deleteModal}"
+═══════════════════════════════════════════════════ -->
+<div th:fragment="deleteModal">
+  <div class="modal-overlay" id="delete-modal" onclick="if(event.target===this)closeDeleteModal()">
+    <div class="modal">
+      <div class="modal-icon">🗑️</div>
+      <div class="modal-title">Xác nhận xóa</div>
+      <div class="modal-body">Bạn có chắc muốn xóa <strong class="modal-name" id="delete-modal-name"></strong>?</div>
+      <div class="modal-sub">Hành động này không thể hoàn tác!</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeDeleteModal()">Hủy bỏ</button>
+        <a id="delete-confirm-btn" href="#" class="btn btn-danger" style="flex:1;justify-content:center">Xóa ngay</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /deleteModal fragment -->
+
+
+<!-- ═══════════════════════════════════════════════════
+     FRAGMENT 5: TOAST + FLASH MESSAGE
+     Gọi bằng: th:replace="~{fragments/layout :: toastArea}"
+═══════════════════════════════════════════════════ -->
+<div th:fragment="toastArea">
+  <!-- Toast box để JS insert thông báo -->
+  <div id="toast"></div>
+
+  <!--
+    Flash message ẩn — chứa dữ liệu từ RedirectAttributes.
+    Script ở trên sẽ đọc data-msg và data-type rồi show toast.
+  -->
+  <div id="flash-msg" style="display:none"
+       th:if="${success != null or error != null}"
+       th:attr="data-msg=${success != null ? success : error},
+                data-type=${success != null ? 'success' : 'error'}">
+  </div>
+</div>
+<!-- /toastArea fragment -->
+
+</body>
+</html>
