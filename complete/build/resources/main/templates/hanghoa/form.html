@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <!-- th:text thay đổi tiêu đề tab tuỳ theo đang thêm hay sửa -->
+  <title th:text="${hangHoa != null} ? 'Sửa hàng hóa – Smart Warehouse' : 'Thêm hàng hóa – Smart Warehouse'">Form</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+
+    <!-- Page Header: tiêu đề thay đổi tuỳ đang thêm mới hay chỉnh sửa -->
+    <div class="page-header">
+      <div>
+        <h2 th:text="${hangHoa != null} ? '✏️ Sửa hàng hóa' : '📦 Thêm hàng hóa mới'">Form</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a th:href="@{/hanghoa}">Hàng hóa</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span th:text="${hangHoa != null} ? 'Chỉnh sửa' : 'Thêm mới'">Form</span>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      Form thêm: action="/hanghoa/save"   — HangHoaController.save(...)
+      Form sửa : action="/hanghoa/update" — HangHoaController.update(...)
+      th:action dùng toán tử 3 ngôi để chọn đúng endpoint.
+    -->
+    <form th:action="${hangHoa != null} ? @{/hanghoa/update} : @{/hanghoa/save}"
+          method="post" id="hh-form">
+
+      <div class="row-2">
+
+        <!-- CỘT TRÁI: Thông tin cơ bản -->
+        <div class="form-card">
+          <div class="form-section-title">📋 Thông tin cơ bản</div>
+
+          <div class="form-group">
+            <label>Mã hàng <span style="color:var(--red)">*</span></label>
+            <!--
+              Nếu đang SỬA: readonly và hiện giá trị cũ th:value="${hangHoa.maHang}"
+              Nếu đang THÊM: để trống và cho phép nhập tự do
+              th:readonly="${hangHoa != null}" — Thymeleaf set attribute readonly
+            -->
+            <input class="form-control required" type="text" name="maHang"
+                   placeholder="VD: HH001"
+                   th:value="${hangHoa?.maHang}"
+                   th:readonly="${hangHoa != null}"
+                   th:style="${hangHoa != null} ? 'opacity:.6;cursor:not-allowed' : ''"/>
+            <div class="form-hint">Mã hàng không thể thay đổi sau khi tạo</div>
+          </div>
+
+          <div class="form-group">
+            <label>Tên hàng hóa <span style="color:var(--red)">*</span></label>
+            <input class="form-control required" type="text" name="tenHang"
+                   placeholder="Nhập tên hàng hóa"
+                   th:value="${hangHoa?.tenHang}"/>
+          </div>
+
+          <div class="form-group">
+            <label>Phân loại <span style="color:var(--red)">*</span></label>
+            <select class="form-control required" name="phanLoai">
+              <option value="">-- Chọn phân loại --</option>
+              <!--
+                th:selected so sánh giá trị hiện tại với giá trị của option.
+                Khi đang sửa, option đúng sẽ được chọn sẵn.
+              -->
+              <option value="Điện tử"
+                      th:selected="${hangHoa?.phanLoai == 'Điện tử'}">⚡ Điện tử</option>
+              <option value="Thực phẩm"
+                      th:selected="${hangHoa?.phanLoai == 'Thực phẩm'}">🍎 Thực phẩm</option>
+              <option value="Tiêu dùng"
+                      th:selected="${hangHoa?.phanLoai == 'Tiêu dùng'}">🛒 Tiêu dùng</option>
+              <option value="Khác"
+                      th:selected="${hangHoa?.phanLoai == 'Khác'}">📦 Khác</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Số lượng tồn <span style="color:var(--red)">*</span></label>
+              <input class="form-control required" type="number" name="soLuongTon"
+                     min="0" placeholder="0"
+                     th:value="${hangHoa?.soLuongTon ?: 0}"/>
+            </div>
+            <div class="form-group">
+              <label>Đơn giá (₫) <span style="color:var(--red)">*</span></label>
+              <input class="form-control required" type="number" name="donGia"
+                     min="0" placeholder="0"
+                     th:value="${hangHoa?.donGia ?: 0}"/>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Mô tả</label>
+            <textarea class="form-control" name="moTa" rows="3"
+                      placeholder="Mô tả thêm về hàng hóa..."
+                      th:text="${hangHoa?.moTa}"></textarea>
+          </div>
+        </div>
+
+        <!-- CỘT PHẢI: Thông tin kho -->
+        <div class="form-card">
+          <div class="form-section-title">📦 Thông tin kho</div>
+
+          <div class="form-group">
+            <label>Hạn sử dụng</label>
+            <input class="form-control" type="date" name="hanSuDung"
+                   th:value="${hangHoa?.hanSuDung}"/>
+            <div class="form-hint">Để trống nếu hàng không có hạn sử dụng</div>
+          </div>
+
+          <div class="form-group">
+            <label>Nhà cung cấp <span style="color:var(--red)">*</span></label>
+            <!--
+              th:each lặp qua ${danhSachNCC} được truyền từ Controller.
+              HangHoaController.addForm() truyền:
+                model.addAttribute("danhSachNCC", new NhaCungCapDB().getAll());
+            -->
+            <select class="form-control required" name="maNhaCungCap">
+              <option value="">-- Chọn nhà cung cấp --</option>
+              <option th:each="ncc : ${danhSachNCC}"
+                      th:value="${ncc.maNCC}"
+                      th:text="${ncc.maNCC + ' – ' + ncc.tenNCC}"
+                      th:selected="${hangHoa?.maNhaCungCap == ncc.maNCC}">
+                NCC001
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Vị trí kho <span style="color:var(--red)">*</span></label>
+            <select class="form-control required" name="maViTri">
+              <option value="">-- Chọn vị trí --</option>
+              <option th:each="vt : ${danhSachViTri}"
+                      th:value="${vt.maViTri}"
+                      th:text="${vt.maViTri + ' – ' + vt.tenViTri + ' (' + vt.khuVuc + ')'}"
+                      th:selected="${hangHoa?.maViTri == vt.maViTri}">
+                VT001
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Số lượng tối thiểu <span style="color:var(--red)">*</span></label>
+            <input class="form-control required" type="number" name="soLuongToiThieu"
+                   min="0" placeholder="10"
+                   th:value="${hangHoa?.soLuongToiThieu ?: 10}"/>
+            <div class="form-hint warn">
+              <i class="bi bi-info-circle"></i>
+              Hệ thống sẽ tự động cảnh báo khi tồn kho xuống dưới ngưỡng này
+            </div>
+          </div>
+
+          <div class="form-divider"></div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success" style="flex:1"
+                    onclick="return validateForm('hh-form')">
+              <i class="bi bi-check-lg"></i>
+              <span th:text="${hangHoa != null} ? 'Cập nhật hàng hóa' : 'Lưu hàng hóa'">Lưu</span>
+            </button>
+            <a class="btn btn-ghost" th:href="@{/hanghoa}">
+              <i class="bi bi-x-lg"></i> Hủy
+            </a>
+          </div>
+        </div>
+
+      </div><!-- /row-2 -->
+    </form>
+
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

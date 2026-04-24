@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${nhaCungCap != null} ? 'Sửa nhà cung cấp' : 'Thêm nhà cung cấp'">Form</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h2 th:text="${nhaCungCap != null} ? '✏️ Sửa nhà cung cấp' : '🏢 Thêm nhà cung cấp mới'">Form</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a th:href="@{/nhacungcap}">Nhà cung cấp</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span th:text="${nhaCungCap != null} ? 'Chỉnh sửa' : 'Thêm mới'">Form</span>
+        </div>
+      </div>
+    </div>
+
+    <form th:action="${nhaCungCap != null} ? @{/nhacungcap/update} : @{/nhacungcap/save}"
+          method="post" id="ncc-form" style="max-width:600px">
+
+      <div class="form-card">
+        <div class="form-section-title">🏢 Thông tin nhà cung cấp</div>
+
+        <div class="form-group">
+          <label>Mã nhà cung cấp <span style="color:var(--red)">*</span></label>
+          <input class="form-control required" type="text" name="maNCC"
+                 placeholder="VD: NCC001"
+                 th:value="${nhaCungCap?.maNCC}"
+                 th:readonly="${nhaCungCap != null}"
+                 th:style="${nhaCungCap != null} ? 'opacity:.6;cursor:not-allowed' : ''"/>
+        </div>
+
+        <div class="form-group">
+          <label>Tên nhà cung cấp <span style="color:var(--red)">*</span></label>
+          <input class="form-control required" type="text" name="tenNCC"
+                 placeholder="Nhập tên đầy đủ của nhà cung cấp"
+                 th:value="${nhaCungCap?.tenNCC}"/>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Số điện thoại</label>
+            <input class="form-control" type="tel" name="soDienThoai"
+                   placeholder="VD: 0901 234 567"
+                   th:value="${nhaCungCap?.soDienThoai}"/>
+          </div>
+          <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" type="email" name="email"
+                   placeholder="VD: contact@company.com"
+                   th:value="${nhaCungCap?.email}"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Địa chỉ</label>
+          <textarea class="form-control" name="diaChi" rows="2"
+                    placeholder="Địa chỉ đầy đủ của nhà cung cấp"
+                    th:text="${nhaCungCap?.diaChi}"></textarea>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success" style="flex:1"
+                  onclick="return validateForm('ncc-form')">
+            <i class="bi bi-check-lg"></i>
+            <span th:text="${nhaCungCap != null} ? 'Cập nhật' : 'Lưu nhà cung cấp'">Lưu</span>
+          </button>
+          <a class="btn btn-ghost" th:href="@{/nhacungcap}">
+            <i class="bi bi-x-lg"></i> Hủy
+          </a>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

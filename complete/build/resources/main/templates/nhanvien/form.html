@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${nhanVien != null} ? 'Sửa nhân viên' : 'Thêm nhân viên'">Form</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h2 th:text="${nhanVien != null} ? '✏️ Sửa nhân viên' : '👥 Thêm nhân viên mới'">Form</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a th:href="@{/nhanvien}">Nhân viên</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span th:text="${nhanVien != null} ? 'Chỉnh sửa' : 'Thêm mới'">Form</span>
+        </div>
+      </div>
+    </div>
+
+    <form th:action="${nhanVien != null} ? @{/nhanvien/update} : @{/nhanvien/save}"
+          method="post" id="nv-form" style="max-width:580px">
+
+      <div class="form-card">
+        <div class="form-section-title">👤 Thông tin nhân viên</div>
+
+        <div class="form-group">
+          <label>Mã nhân viên <span style="color:var(--red)">*</span></label>
+          <input class="form-control required" type="text" name="maNV"
+                 placeholder="VD: NV001"
+                 th:value="${nhanVien?.maNV}"
+                 th:readonly="${nhanVien != null}"
+                 th:style="${nhanVien != null} ? 'opacity:.6;cursor:not-allowed' : ''"/>
+        </div>
+
+        <div class="form-group">
+          <label>Họ và tên <span style="color:var(--red)">*</span></label>
+          <input class="form-control required" type="text" name="hoTen"
+                 placeholder="Nhập họ tên đầy đủ"
+                 th:value="${nhanVien?.hoTen}"/>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input class="form-control" type="email" name="email"
+                   placeholder="email@company.com"
+                   th:value="${nhanVien?.email}"/>
+          </div>
+          <div class="form-group">
+            <label>Số điện thoại</label>
+            <input class="form-control" type="tel" name="soDienThoai"
+                   placeholder="VD: 0901 234 567"
+                   th:value="${nhanVien?.soDienThoai}"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Vai trò <span style="color:var(--red)">*</span></label>
+          <select class="form-control required" name="vaiTro">
+            <option value="">-- Chọn vai trò --</option>
+            <option value="admin"
+                    th:selected="${nhanVien?.vaiTro == 'admin'}">🔴 Admin — Toàn quyền</option>
+            <option value="quan_ly"
+                    th:selected="${nhanVien?.vaiTro == 'quan_ly'}">🟡 Quản lý — Duyệt phiếu, xem báo cáo</option>
+            <option value="nhan_vien"
+                    th:selected="${nhanVien?.vaiTro == 'nhan_vien'}">⚪ Nhân viên — Tạo phiếu, quản lý hàng</option>
+          </select>
+          <div class="form-hint">Vai trò quyết định những gì nhân viên được phép thao tác trong hệ thống</div>
+        </div>
+
+        <div class="form-group">
+          <label>Mật khẩu <span style="color:var(--red)" th:if="${nhanVien == null}">*</span></label>
+          <div style="position:relative">
+            <input class="form-control" type="password" name="matKhau" id="pwd-inp"
+                   th:placeholder="${nhanVien != null} ? 'Để trống nếu không đổi mật khẩu' : 'Nhập mật khẩu'"
+                   th:class="${nhanVien == null} ? 'form-control required' : 'form-control'"/>
+            <button type="button" onclick="togglePwd()"
+                    style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px">
+              <i class="bi bi-eye" id="pwd-eye"></i>
+            </button>
+          </div>
+          <div class="form-hint" th:if="${nhanVien != null}">
+            <i class="bi bi-info-circle"></i> Để trống nếu muốn giữ mật khẩu cũ
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success" style="flex:1"
+                  onclick="return validateForm('nv-form')">
+            <i class="bi bi-check-lg"></i>
+            <span th:text="${nhanVien != null} ? 'Cập nhật nhân viên' : 'Thêm nhân viên'">Lưu</span>
+          </button>
+          <a class="btn btn-ghost" th:href="@{/nhanvien}">
+            <i class="bi bi-x-lg"></i> Hủy
+          </a>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+<script>
+  function togglePwd() {
+    const inp = document.getElementById('pwd-inp');
+    const ico = document.getElementById('pwd-eye');
+    if (inp.type === 'password') { inp.type = 'text'; ico.className = 'bi bi-eye-slash'; }
+    else { inp.type = 'password'; ico.className = 'bi bi-eye'; }
+  }
+</script>
+</body>
+</html>

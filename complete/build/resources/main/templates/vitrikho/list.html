@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📍 Vị trí kho – Smart Warehouse</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+  <style>
+    /* Grid vị trí kho — mỗi card đại diện 1 kệ/zone */
+    .vt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .vt-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .vt-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+    /* Phần header card với màu khu vực */
+    .vt-card-top {
+      padding: 16px 18px 12px;
+      display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .vt-khu-badge {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 900; font-size: 20px; color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* Thanh tỉ lệ sử dụng */
+    .usage-bar {
+      height: 6px; background: rgba(255,255,255,.06);
+      border-radius: 99px; overflow: hidden; margin: 8px 0 4px;
+    }
+    .usage-fill {
+      height: 100%; border-radius: 99px;
+      transition: width .8s ease;
+    }
+    .usage-fill.ok   { background: linear-gradient(90deg, #059669, #10b981); }
+    .usage-fill.warn { background: linear-gradient(90deg, #d97706, #f59e0b); }
+    .usage-fill.full { background: linear-gradient(90deg, #dc2626, #ef4444); }
+
+    .vt-body { padding: 14px 18px; }
+    .vt-row  { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; font-size: 13px; color: var(--txt2); }
+    .vt-row i { color: var(--acc2); font-size: 13px; width: 14px; }
+    .vt-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+    /* Map view — sơ đồ kho đơn giản */
+    .warehouse-map {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px;
+      margin-bottom: 24px; display: none;
+    }
+    .warehouse-map.show { display: block; }
+    .map-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px; max-width: 600px; margin: 0 auto;
+    }
+    .map-zone {
+      aspect-ratio: 1.6;
+      border-radius: 10px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+      border: 2px solid transparent;
+    }
+    .map-zone:hover { transform: scale(1.04); }
+    .map-zone .zone-name { font-size: 18px; font-weight: 900; margin-bottom: 4px; }
+    .map-zone .zone-pct  { font-size: 11px; opacity: .8; }
+  </style>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <h2>📍 Quản lý Vị trí kho</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Vị trí kho</span>
+        </div>
+      </div>
+      <div class="flex-gap">
+        <!-- Toggle sơ đồ kho -->
+        <button class="btn btn-ghost" onclick="toggleMap()">
+          <i class="bi bi-map"></i> Sơ đồ kho
+        </button>
+        <a class="btn btn-success" th:href="@{/vitrikho/add}">
+          <i class="bi bi-plus-lg"></i> Thêm vị trí
+        </a>
+      </div>
+    </div>
+
+    <!-- Sơ đồ kho trực quan (ẩn/hiện bằng nút) -->
+    <div class="warehouse-map" id="warehouse-map">
+      <h5 style="font-family:'Space Grotesk',sans-serif;font-weight:700;margin-bottom:18px;color:var(--txt)">
+        🗺 Sơ đồ tổng quan kho hàng
+      </h5>
+      <div class="map-grid" id="map-grid">
+        <!--
+          Thymeleaf sẽ render các zone từ ${danhSachViTri}.
+          Mỗi vị trí kho được hiển thị như một ô màu trên bản đồ.
+        -->
+        <div th:each="vt : ${danhSachViTri}"
+             class="map-zone"
+             th:style="${'background:' + (vt.phanTramSuDung() > 80 ? 'rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#f87171' : vt.phanTramSuDung() > 50 ? 'rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:#fbbf24' : 'rgba(16,185,129,.1);border-color:rgba(16,185,129,.2);color:#34d399')}">
+          <div class="zone-name" th:text="${vt.khuVuc}">A</div>
+          <div th:text="${vt.tenViTri}">Kệ A1</div>
+          <div class="zone-pct"
+               th:text="${#numbers.formatDecimal(vt.phanTramSuDung(), 0, 0) + '% dùng'}">0%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary stats -->
+    <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px"
+         th:unless="${#lists.isEmpty(danhSachViTri)}">
+      <div class="stat-card green">
+        <div class="stat-icon">📍</div>
+        <div class="stat-num" th:text="${danhSachViTri.size()}">0</div>
+        <div class="stat-label">Tổng vị trí</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">📦</div>
+        <div class="stat-num"
+             th:text="${danhSachViTri.stream().mapToInt(v -> v.dangSuDung).sum()}">0</div>
+        <div class="stat-label">Đang sử dụng</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-icon">🏷</div>
+        <div class="stat-num"
+             th:text="${danhSachViTri.stream().mapToInt(v -> v.sucChua).sum()}">0</div>
+        <div class="stat-label">Tổng sức chứa</div>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <div class="inp-search-wrap">
+        <i class="bi bi-search"></i>
+        <input class="inp-search" id="search-inp" type="text"
+               placeholder="Tìm theo tên, khu vực, mã vị trí..."/>
+      </div>
+      <select class="filter-select" id="filter-khu" onchange="filterVT()">
+        <option value="">Tất cả khu vực</option>
+        <option value="A">Khu A</option>
+        <option value="B">Khu B</option>
+        <option value="C">Khu C</option>
+        <option value="D">Khu D</option>
+      </select>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${#lists.isEmpty(danhSachViTri)}"
+         class="data-card" style="text-align:center;padding:60px;color:var(--txt2)">
+      <i class="bi bi-geo-alt" style="font-size:44px;display:block;margin-bottom:14px;color:var(--txt3)"></i>
+      <h5>Chưa có vị trí kho nào</h5>
+      <p style="font-size:13px;color:var(--txt3)">Nhấn "Thêm vị trí" để bắt đầu thiết lập sơ đồ kho.</p>
+    </div>
+
+    <!-- Vị trí kho cards -->
+    <div class="vt-grid" id="vt-grid" th:unless="${#lists.isEmpty(danhSachViTri)}">
+      <div th:each="vt : ${danhSachViTri}"
+           class="vt-card"
+           th:attr="data-khu=${vt.khuVuc}, data-name=${vt.tenViTri}">
+
+        <div class="vt-card-top">
+          <!-- Badge khu vực với màu xoay vòng -->
+          <div class="vt-khu-badge"
+               th:style="${'background:' + (vt.khuVuc == 'A' ? 'linear-gradient(135deg,#5b21b6,#7c3aed)' : vt.khuVuc == 'B' ? 'linear-gradient(135deg,#1d4ed8,#3b82f6)' : vt.khuVuc == 'C' ? 'linear-gradient(135deg,#065f46,#10b981)' : 'linear-gradient(135deg,#92400e,#f59e0b)')}"
+               th:text="${vt.khuVuc}">A</div>
+          <div style="flex:1">
+            <div style="font-weight:800;color:#fff;font-size:14px" th:text="${vt.tenViTri}">Kệ A1</div>
+            <div style="font-size:11px;color:var(--txt3)" th:text="${vt.maViTri}">VT001</div>
+          </div>
+          <!-- Badge trạng thái còn chỗ / đầy -->
+          <span class="badge badge-green" th:if="${vt.conChoTrong()}">Còn chỗ</span>
+          <span class="badge badge-red"   th:unless="${vt.conChoTrong()}">Đầy</span>
+        </div>
+
+        <div class="vt-body">
+          <div class="vt-row">
+            <i class="bi bi-info-circle"></i>
+            <span th:text="${vt.moTa ?: 'Không có mô tả'}">Mô tả</span>
+          </div>
+
+          <!-- Thanh tỉ lệ sử dụng -->
+          <div style="margin-top:10px">
+            <div class="flex-between" style="margin-bottom:5px">
+              <span style="font-size:12px;color:var(--txt3)">Mức sử dụng</span>
+              <span style="font-size:12px;font-weight:700"
+                    th:text="${vt.dangSuDung + '/' + vt.sucChua}"
+                    th:style="${vt.phanTramSuDung() > 80 ? 'color:var(--red)' : vt.phanTramSuDung() > 50 ? 'color:var(--yellow)' : 'color:var(--green)'}">
+                0/100
+              </span>
+            </div>
+            <div class="usage-bar">
+              <div th:class="${vt.phanTramSuDung() > 80 ? 'usage-fill full' : vt.phanTramSuDung() > 50 ? 'usage-fill warn' : 'usage-fill ok'}"
+                   th:attr="style='width:' + ${#numbers.formatDecimal(vt.phanTramSuDung(), 0, 0)} + '%'">
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--txt3);text-align:right"
+                 th:text="${#numbers.formatDecimal(vt.phanTramSuDung(), 0, 0) + '% sử dụng'}">0%</div>
+          </div>
+
+          <div class="vt-foot">
+            <div></div>
+            <div class="flex-gap">
+              <a class="btn btn-warning btn-sm"
+                 th:href="@{/vitrikho/edit/{id}(id=${vt.maViTri})}"
+                 title="Sửa">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <button class="btn btn-danger btn-sm"
+                      th:onclick="'confirmDelete(\'' + ${vt.tenViTri} + '\', \'' + @{/vitrikho/delete/{id}(id=${vt.maViTri})} + '\')'">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: deleteModal}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+<script>
+  function toggleMap() {
+    document.getElementById('warehouse-map').classList.toggle('show');
+  }
+  function filterVT() {
+    const khu    = document.getElementById('filter-khu').value.toUpperCase();
+    const search = (document.getElementById('search-inp').value || '').toLowerCase();
+    document.querySelectorAll('#vt-grid .vt-card').forEach(card => {
+      const matchK = !khu    || card.dataset.khu === khu;
+      const matchQ = !search || card.textContent.toLowerCase().includes(search);
+      card.style.display = (matchK && matchQ) ? '' : 'none';
+    });
+  }
+  document.getElementById('search-inp').addEventListener('input', filterVT);
+</script>
+</body>
+</html>

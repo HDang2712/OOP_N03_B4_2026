@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📥 Tạo phiếu nhập – Smart Warehouse</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h2>📥 Tạo Phiếu nhập mới</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a th:href="@{/phieunhap}">Phiếu nhập</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Tạo mới</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info box -->
+    <div class="flash flash-success" style="margin-bottom:18px">
+      <i class="bi bi-info-circle-fill"></i>
+      Phiếu mới tạo sẽ có trạng thái <strong>DRAFT</strong>. Sau khi hoàn thành, nhấn "Gửi duyệt" để chuyển sang PENDING chờ quản lý phê duyệt.
+    </div>
+
+    <form th:action="@{/phieunhap/save}" method="post" id="pn-form">
+      <div class="row-2">
+
+        <!-- Thông tin phiếu -->
+        <div class="form-card">
+          <div class="form-section-title">📋 Thông tin phiếu nhập</div>
+
+          <div class="form-group">
+            <label>Mã phiếu nhập <span style="color:var(--red)">*</span></label>
+            <input class="form-control required" type="text" name="maPhieuNhap"
+                   placeholder="VD: PN-2024-001"/>
+            <div class="form-hint">Dùng định dạng PN-YYYY-XXX để dễ tra cứu</div>
+          </div>
+
+          <div class="form-group">
+            <label>Nhà cung cấp <span style="color:var(--red)">*</span></label>
+            <select class="form-control required" name="maNCC">
+              <option value="">-- Chọn nhà cung cấp --</option>
+              <option th:each="ncc : ${danhSachNCC}"
+                      th:value="${ncc.maNCC}"
+                      th:text="${ncc.maNCC + ' – ' + ncc.tenNCC}">NCC</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Ghi chú</label>
+            <textarea class="form-control" name="ghiChu" rows="4"
+                      placeholder="Ghi chú về lô hàng, điều kiện giao hàng..."></textarea>
+          </div>
+
+          <div class="form-divider"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-success" style="flex:1"
+                    onclick="return validateForm('pn-form')">
+              <i class="bi bi-check-lg"></i> Lưu phiếu (DRAFT)
+            </button>
+            <a class="btn btn-ghost" th:href="@{/phieunhap}">
+              <i class="bi bi-x-lg"></i> Hủy
+            </a>
+          </div>
+        </div>
+
+        <!-- Chi tiết hàng nhập -->
+        <div class="form-card">
+          <div class="form-section-title">📦 Chi tiết hàng nhập</div>
+          <div style="font-size:12.5px;color:var(--txt3);margin-bottom:14px;line-height:1.6">
+            <i class="bi bi-info-circle"></i>
+            Thêm từng dòng hàng hóa cần nhập. Hệ thống sẽ tự cộng tồn kho sau khi phiếu được duyệt.
+          </div>
+          <table class="tbl" style="margin-bottom:12px" id="chi-tiet-table">
+            <thead>
+              <tr>
+                <th>Mã hàng</th>
+                <th>Số lượng</th>
+                <th>Đơn giá</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ct-body">
+              <tr id="ct-row-1">
+                <td>
+                  <select class="form-control" name="maHang[]" style="min-width:140px">
+                    <option value="">-- Chọn hàng --</option>
+                    <option th:each="h : ${danhSachHang}"
+                            th:value="${h.maHang}"
+                            th:text="${h.maHang + ' – ' + h.tenHang}">HH</option>
+                  </select>
+                </td>
+                <td><input class="form-control" type="number" name="soLuong[]" min="1" placeholder="0" style="width:80px" oninput="calcTotal()"/></td>
+                <td><input class="form-control" type="number" name="donGia[]"  min="0" placeholder="0" style="width:110px" oninput="calcTotal()"/></td>
+                <td>
+                  <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <button type="button" class="btn btn-ghost btn-sm"
+                  style="width:100%;justify-content:center;margin-bottom:16px"
+                  onclick="addRow()">
+            <i class="bi bi-plus-lg"></i> Thêm dòng hàng
+          </button>
+          <div style="text-align:right;padding:10px 0;border-top:1px solid var(--border)">
+            <span style="font-size:12px;color:var(--txt3)">Tổng giá trị ước tính:</span>
+            <strong style="font-size:18px;color:var(--green);margin-left:8px" id="total-display">0₫</strong>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+<script>
+  /* Lưu template HTML của một dòng chi tiết để nhân bản */
+  let rowCount = 1;
+  const rowTemplate = document.getElementById('ct-row-1').innerHTML;
+
+  function addRow() {
+    rowCount++;
+    const tr = document.createElement('tr');
+    tr.id = 'ct-row-' + rowCount;
+    tr.innerHTML = rowTemplate;
+    document.getElementById('ct-body').appendChild(tr);
+    calcTotal();
+  }
+
+  function removeRow(btn) {
+    const row = btn.closest('tr');
+    if (document.querySelectorAll('#ct-body tr').length > 1) {
+      row.remove();
+      calcTotal();
+    } else {
+      /* Không xóa dòng cuối, chỉ reset giá trị */
+      row.querySelectorAll('input').forEach(inp => inp.value = '');
+      calcTotal();
+    }
+  }
+
+  function calcTotal() {
+    let total = 0;
+    document.querySelectorAll('#ct-body tr').forEach(row => {
+      const sl  = parseFloat(row.querySelector('input[name="soLuong[]"]')?.value) || 0;
+      const dg  = parseFloat(row.querySelector('input[name="donGia[]"]')?.value)  || 0;
+      total += sl * dg;
+    });
+    document.getElementById('total-display').textContent =
+      total.toLocaleString('vi-VN') + '₫';
+  }
+</script>
+</body>
+</html>

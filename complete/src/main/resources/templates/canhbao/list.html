@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🔔 Cảnh báo – Smart Warehouse</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+
+    <div class="page-header">
+      <div>
+        <h2>🔔 Quản lý Cảnh báo</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Cảnh báo</span>
+        </div>
+      </div>
+      <!--
+        Nút "Chạy kiểm tra ngay" gọi CanhBaoController.runCheck()
+        AlertChecker sẽ quét toàn bộ hàng hóa và tạo cảnh báo mới nếu có.
+        Đây là tính năng "smart" quan trọng nhất để demo cho giảng viên.
+      -->
+      <a class="btn btn-scan" th:href="@{/canhbao/check}"
+         style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;border:none;box-shadow:0 4px 16px rgba(124,58,237,.35)">
+        <i class="bi bi-cpu"></i> Chạy kiểm tra ngay
+      </a>
+    </div>
+
+    <!-- Tabs: Chưa xử lý / Đã xử lý -->
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="tab-chua" onclick="switchTab('chua')">
+        🔴 Chưa xử lý
+        <span class="badge badge-red" style="margin-left:4px;font-size:10px"
+              th:text="${soChuaXuLy ?: 0}">0</span>
+      </button>
+      <button class="nav-tab" id="tab-da" onclick="switchTab('da')">
+        ✅ Đã xử lý
+        <span class="badge badge-green" style="margin-left:4px;font-size:10px"
+              th:text="${soDaXuLy ?: 0}">0</span>
+      </button>
+    </div>
+
+    <!-- Tab: Chưa xử lý -->
+    <div id="panel-chua">
+      <div th:if="${#lists.isEmpty(canhBaoChuaXuLy)}"
+           class="data-card" style="text-align:center;padding:50px;color:var(--txt2)">
+        <i class="bi bi-shield-check-fill" style="font-size:44px;display:block;margin-bottom:14px;color:var(--green)"></i>
+        <h5 style="margin-bottom:6px;color:var(--txt)">Hệ thống ổn định!</h5>
+        <p style="font-size:13px;color:var(--txt3)">Không có cảnh báo nào cần xử lý. Nhấn "Chạy kiểm tra" để quét lại.</p>
+      </div>
+
+      <!--
+        th:each lặp qua ${canhBaoChuaXuLy} — ArrayList<CanhBao>
+        được truyền từ CanhBaoController:
+          model.addAttribute("canhBaoChuaXuLy", canhBaoDB.getChuaXuLy());
+      -->
+      <div th:each="cb : ${canhBaoChuaXuLy}"
+           th:class="${'cb-card ' + (cb.loaiCanhBao == 'TON_KHO_THAP' ? 'cb-red' : cb.loaiCanhBao == 'HAN_SU_DUNG' ? 'cb-yellow' : cb.loaiCanhBao == 'XUAT_BAT_THUONG' ? 'cb-orange' : 'cb-blue')}">
+        <div class="cb-header">
+          <!-- Icon tùy loại cảnh báo -->
+          <span class="cb-icon">
+            <span th:switch="${cb.loaiCanhBao}">
+              <span th:case="'TON_KHO_THAP'">🔴</span>
+              <span th:case="'HAN_SU_DUNG'">🟡</span>
+              <span th:case="'XUAT_BAT_THUONG'">🟠</span>
+              <span th:case="*">🔵</span>
+            </span>
+          </span>
+
+          <!-- Tiêu đề loại cảnh báo -->
+          <span class="cb-title">
+            <span th:switch="${cb.loaiCanhBao}">
+              <span th:case="'TON_KHO_THAP'">Tồn kho thấp</span>
+              <span th:case="'HAN_SU_DUNG'">Hàng sắp hết hạn sử dụng</span>
+              <span th:case="'XUAT_BAT_THUONG'">Xuất hàng bất thường</span>
+              <span th:case="*">Thông báo hệ thống</span>
+            </span>
+            — <span th:text="${cb.maHang}">HH001</span>
+          </span>
+
+          <!-- Badge loại -->
+          <span th:switch="${cb.loaiCanhBao}">
+            <span th:case="'TON_KHO_THAP'"     class="badge badge-red">TỒN KHO THẤP</span>
+            <span th:case="'HAN_SU_DUNG'"      class="badge badge-warn">SẮP HẾT HẠN</span>
+            <span th:case="'XUAT_BAT_THUONG'"  class="badge badge-warn">XUẤT BẤT THƯỜNG</span>
+            <span th:case="*"                   class="badge badge-blue">THÔNG BÁO</span>
+          </span>
+
+          <span class="cb-meta" th:text="${cb.thoiGian}">—</span>
+        </div>
+
+        <!-- Nội dung chi tiết -->
+        <p class="cb-body" th:text="${cb.noiDung}">Nội dung cảnh báo...</p>
+
+        <!--
+          Nút "Đánh dấu đã xử lý" gọi CanhBaoController.xuLy() qua GET request.
+          Controller sẽ gọi CanhBaoDB.markDaXuLy(maCanhBao, maNVXuLy) và redirect về /canhbao.
+        -->
+        <a class="btn btn-success btn-sm"
+           th:href="@{/canhbao/xuly/{id}(id=${cb.maCanhBao})}">
+          <i class="bi bi-check2-circle"></i> Đánh dấu đã xử lý
+        </a>
+      </div>
+    </div>
+
+    <!-- Tab: Đã xử lý -->
+    <div id="panel-da" style="display:none">
+      <div th:if="${#lists.isEmpty(danhSachCanhBao)}"
+           class="data-card" style="text-align:center;padding:50px;color:var(--txt2)">
+        <p style="font-size:13px;color:var(--txt3)">Chưa có cảnh báo nào được xử lý.</p>
+      </div>
+
+      <!-- Lọc ra chỉ những cảnh báo đã xử lý (DA_XU_LY) -->
+      <th:block th:each="cb : ${danhSachCanhBao}">
+        <div th:if="${cb.trangThai == 'DA_XU_LY'}"
+             class="cb-card resolved"
+             th:class="${'cb-card resolved ' + (cb.loaiCanhBao == 'TON_KHO_THAP' ? 'cb-red' : cb.loaiCanhBao == 'HAN_SU_DUNG' ? 'cb-yellow' : 'cb-orange')}">
+          <div class="cb-header">
+            <span class="cb-icon">✅</span>
+            <span class="cb-title" th:text="${cb.noiDung}">Nội dung</span>
+            <span class="badge badge-green">ĐÃ XỬ LÝ</span>
+            <span class="cb-meta" th:text="${cb.thoiGian}">—</span>
+          </div>
+          <p class="cb-body" style="font-size:12px;color:var(--txt3)">
+            Đã xử lý bởi: <strong th:text="${cb.maNVXuLy ?: 'Hệ thống'}">NV001</strong>
+          </p>
+        </div>
+      </th:block>
+    </div>
+
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+<script>
+  function switchTab(tab) {
+    document.getElementById('panel-chua').style.display = tab === 'chua' ? 'block' : 'none';
+    document.getElementById('panel-da').style.display   = tab === 'da'   ? 'block' : 'none';
+    document.getElementById('tab-chua').classList.toggle('active', tab === 'chua');
+    document.getElementById('tab-da').classList.toggle('active',   tab === 'da');
+  }
+</script>
+</body>
+</html>

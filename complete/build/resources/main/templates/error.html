@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title th:text="${viTriKho != null} ? 'Sửa vị trí kho' : 'Thêm vị trí kho'">Form</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h2 th:text="${viTriKho != null} ? '✏️ Sửa vị trí kho' : '📍 Thêm vị trí kho mới'">Form</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <a th:href="@{/vitrikho}">Vị trí kho</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span th:text="${viTriKho != null} ? 'Chỉnh sửa' : 'Thêm mới'">Form</span>
+        </div>
+      </div>
+    </div>
+
+    <form th:action="${viTriKho != null} ? @{/vitrikho/update} : @{/vitrikho/save}"
+          method="post" id="vt-form" style="max-width:560px">
+
+      <div class="form-card">
+        <div class="form-section-title">📍 Thông tin vị trí kho</div>
+
+        <div class="form-group">
+          <label>Mã vị trí <span style="color:var(--red)">*</span></label>
+          <input class="form-control required" type="text" name="maViTri"
+                 placeholder="VD: VT001"
+                 th:value="${viTriKho?.maViTri}"
+                 th:readonly="${viTriKho != null}"
+                 th:style="${viTriKho != null} ? 'opacity:.6;cursor:not-allowed' : ''"/>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tên vị trí <span style="color:var(--red)">*</span></label>
+            <input class="form-control required" type="text" name="tenViTri"
+                   placeholder="VD: Kệ A1, Tầng 2..."
+                   th:value="${viTriKho?.tenViTri}"/>
+          </div>
+          <div class="form-group">
+            <label>Khu vực <span style="color:var(--red)">*</span></label>
+            <select class="form-control required" name="khuVuc">
+              <option value="">-- Chọn khu vực --</option>
+              <option value="A" th:selected="${viTriKho?.khuVuc == 'A'}">🟣 Khu A – Điện tử</option>
+              <option value="B" th:selected="${viTriKho?.khuVuc == 'B'}">🔵 Khu B – Phụ kiện</option>
+              <option value="C" th:selected="${viTriKho?.khuVuc == 'C'}">🟢 Khu C – Thực phẩm</option>
+              <option value="D" th:selected="${viTriKho?.khuVuc == 'D'}">🟡 Khu D – Tiêu dùng</option>
+              <option value="E" th:selected="${viTriKho?.khuVuc == 'E'}">⚪ Khu E – Văn phòng</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Sức chứa tối đa <span style="color:var(--red)">*</span></label>
+            <input class="form-control required" type="number" name="sucChua"
+                   min="1" placeholder="VD: 100"
+                   th:value="${viTriKho?.sucChua ?: 100}"/>
+            <div class="form-hint">Số lượng đơn vị hàng tối đa có thể chứa</div>
+          </div>
+          <div class="form-group">
+            <label>Đang sử dụng</label>
+            <input class="form-control" type="number" name="dangSuDung"
+                   min="0" placeholder="0"
+                   th:value="${viTriKho?.dangSuDung ?: 0}"/>
+            <div class="form-hint">Số lượng đang chiếm chỗ hiện tại</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mô tả</label>
+          <textarea class="form-control" name="moTa" rows="3"
+                    placeholder="Mô tả thêm về vị trí, loại hàng phù hợp..."
+                    th:text="${viTriKho?.moTa}"></textarea>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-success" style="flex:1"
+                  onclick="return validateForm('vt-form')">
+            <i class="bi bi-check-lg"></i>
+            <span th:text="${viTriKho != null} ? 'Cập nhật' : 'Lưu vị trí'">Lưu</span>
+          </button>
+          <a class="btn btn-ghost" th:href="@{/vitrikho}">
+            <i class="bi bi-x-lg"></i> Hủy
+          </a>
+        </div>
+      </div>
+    </form>
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📋 Lịch sử thao tác – Smart Warehouse</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h2>📋 Lịch sử thao tác</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Lịch sử</span>
+        </div>
+      </div>
+      <a class="btn btn-primary" th:href="@{/baocao/tonkho}">
+        <i class="bi bi-download"></i> Xuất Audit Log
+      </a>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-bar">
+      <div class="inp-search-wrap">
+        <i class="bi bi-search"></i>
+        <input class="inp-search" id="search-inp" type="text"
+               placeholder="Tìm nhân viên, thao tác, đối tượng..."/>
+      </div>
+      <select class="filter-select" id="filter-type" onchange="filterLog()">
+        <option value="">Tất cả thao tác</option>
+        <option value="THEM">THÊM</option>
+        <option value="SUA">SỬA</option>
+        <option value="XOA">XÓA</option>
+        <option value="DUYET">DUYỆT</option>
+        <option value="TU_CHOI">TỪ CHỐI</option>
+      </select>
+      <select class="filter-select" id="filter-obj" onchange="filterLog()">
+        <option value="">Tất cả đối tượng</option>
+        <option value="HANG_HOA">Hàng hóa</option>
+        <option value="PHIEU_NHAP">Phiếu nhập</option>
+        <option value="PHIEU_XUAT">Phiếu xuất</option>
+        <option value="NHAN_VIEN">Nhân viên</option>
+        <option value="NHA_CUNG_CAP">Nhà cung cấp</option>
+      </select>
+    </div>
+
+    <!-- Empty state -->
+    <div th:if="${#lists.isEmpty(danhSachLichSu)}"
+         class="data-card" style="text-align:center;padding:60px;color:var(--txt2)">
+      <i class="bi bi-clock-history" style="font-size:44px;display:block;margin-bottom:14px;color:var(--txt3)"></i>
+      <h5>Chưa có lịch sử nào</h5>
+      <p style="font-size:13px;color:var(--txt3)">Hệ thống sẽ tự ghi lại mọi thao tác thêm, sửa, xóa, duyệt...</p>
+    </div>
+
+    <!-- Timeline -->
+    <div class="data-card" th:unless="${#lists.isEmpty(danhSachLichSu)}">
+      <div class="data-card-body">
+        <div class="timeline" id="timeline-body">
+          <!--
+            th:each lặp qua ${danhSachLichSu} — ArrayList<LichSuThaoTac>
+            Mỗi dòng lịch sử hiển thị dưới dạng timeline item.
+          -->
+          <div th:each="ls : ${danhSachLichSu}"
+               class="tl-item"
+               th:attr="data-type=${ls.loaiThaoTac}, data-obj=${ls.doiTuong}, data-text=${ls.maNV + ' ' + ls.loaiThaoTac + ' ' + ls.doiTuong}">
+
+            <!-- Dot màu theo loại thao tác -->
+            <div th:class="${'tl-dot ' + (ls.loaiThaoTac == 'THEM' ? 'green' : ls.loaiThaoTac == 'SUA' ? 'yellow' : ls.loaiThaoTac == 'XOA' ? 'red' : ls.loaiThaoTac == 'DUYET' ? 'blue' : 'purple')}">
+            </div>
+
+            <!-- Thời gian -->
+            <div class="tl-time">
+              🕐 <span th:text="${ls.thoiGian}">—</span>
+            </div>
+
+            <!-- Card nội dung -->
+            <div class="tl-card">
+              <div class="flex-gap" style="margin-bottom:5px">
+                <span class="tl-actor">
+                  👤 <span th:text="${ls.maNV}">NV001</span>
+                </span>
+                <!-- Badge màu theo loại thao tác -->
+                <span th:switch="${ls.loaiThaoTac}">
+                  <span th:case="'THEM'"     class="badge badge-green">THÊM</span>
+                  <span th:case="'SUA'"      class="badge badge-warn">SỬA</span>
+                  <span th:case="'XOA'"      class="badge badge-red">XÓA</span>
+                  <span th:case="'DUYET'"    class="badge badge-blue">DUYỆT</span>
+                  <span th:case="'TU_CHOI'"  class="badge badge-rejected">TỪ CHỐI</span>
+                  <span th:case="*"          class="badge badge-purple" th:text="${ls.loaiThaoTac}">—</span>
+                </span>
+              </div>
+
+              <div class="tl-action">
+                <!-- Mô tả hành động -->
+                <span th:switch="${ls.loaiThaoTac}">
+                  <span th:case="'THEM'">Thêm mới</span>
+                  <span th:case="'SUA'">Cập nhật</span>
+                  <span th:case="'XOA'">Xóa</span>
+                  <span th:case="'DUYET'">Duyệt</span>
+                  <span th:case="'TU_CHOI'">Từ chối</span>
+                  <span th:case="*" th:text="${ls.loaiThaoTac}">—</span>
+                </span>
+                <!-- Loại đối tượng -->
+                <span th:switch="${ls.doiTuong}">
+                  <span th:case="'HANG_HOA'"> hàng hóa</span>
+                  <span th:case="'PHIEU_NHAP'"> phiếu nhập</span>
+                  <span th:case="'PHIEU_XUAT'"> phiếu xuất</span>
+                  <span th:case="'NHAN_VIEN'"> nhân viên</span>
+                  <span th:case="'NHA_CUNG_CAP'"> nhà cung cấp</span>
+                  <span th:case="*" th:text="' ' + ${ls.doiTuong}"> đối tượng</span>
+                </span>
+                <!-- Mã đối tượng -->
+                <code class="mono" th:text="${ls.maDoiTuong}">ID</code>
+              </div>
+
+              <div class="tl-obj text-muted" th:if="${ls.ghiChu != null and !#strings.isEmpty(ls.ghiChu)}"
+                   th:text="${ls.ghiChu}">Ghi chú</div>
+
+              <!-- Hiển thị thay đổi trước/sau nếu có giá trị -->
+              <div class="tl-change"
+                   th:if="${ls.giaTriCu != null and ls.giaTriMoi != null}">
+                <span class="tl-old" th:text="${ls.giaTriCu}">Giá trị cũ</span>
+                <span class="tl-arrow">→</span>
+                <span class="tl-new" th:text="${ls.giaTriMoi}">Giá trị mới</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+          <span class="pg-info">Tổng <strong th:text="${danhSachLichSu.size()}">0</strong> bản ghi</span>
+          <div class="pg-btns">
+            <button class="pg-btn">‹</button>
+            <button class="pg-btn active">1</button>
+            <button class="pg-btn">2</button>
+            <button class="pg-btn">›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+<script>
+  function filterLog() {
+    const type   = document.getElementById('filter-type').value;
+    const obj    = document.getElementById('filter-obj').value;
+    const search = (document.getElementById('search-inp').value || '').toLowerCase();
+    document.querySelectorAll('#timeline-body .tl-item').forEach(item => {
+      const matchT = !type   || item.dataset.type === type;
+      const matchO = !obj    || item.dataset.obj  === obj;
+      const matchQ = !search || (item.dataset.text || '').toLowerCase().includes(search) || item.textContent.toLowerCase().includes(search);
+      item.style.display = (matchT && matchO && matchQ) ? '' : 'none';
+    });
+  }
+  document.getElementById('search-inp').addEventListener('input', filterLog);
+</script>
+</body>
+</html>

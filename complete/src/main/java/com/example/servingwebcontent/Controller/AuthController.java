@@ -31,8 +31,10 @@ public class AuthController {
                           RedirectAttributes redirectAttributes) {
         try {
             System.out.println("=== LOGIN: " + maNV + " ===");
+            System.out.println("matKhau nhận được: [" + matKhau + "]");
             NhanVienDB db = new NhanVienDB();
             NhanVien nv = db.login(maNV, matKhau);
+            System.out.println("Kết quả: " + (nv != null ? "OK - " + nv.hoTen : "NULL"));
 
             if (nv != null) {
                 SessionHelper.saveUser(session, nv);

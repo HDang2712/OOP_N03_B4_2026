@@ -8,7 +8,7 @@ public class myDBConnection {
 
     public myDBConnection() {}
 
-    String myDatabaseURL = "jdbc:mysql://mysql-3437f441-loct63636-960f.g.aivencloud.com:16018/defaultdb?sslmode=require";
+    String myDatabaseURL = "jdbc:mysql://mysql-3437f441-loct63636-960f.g.aivencloud.com:16014/defaultdb?sslmode=require";
     String myDatabaseUser = "avnadmin";
     String myDatabasePassword = "AVNS_yhMkESSYgzFgBQSnpEd";
     String myDatabaseDriver = "com.mysql.cj.jdbc.Driver";

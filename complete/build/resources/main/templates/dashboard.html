@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📊 Dashboard – Smart Warehouse</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+
+  <!-- Sidebar — dùng fragment từ fragments/layout.html -->
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+
+  <!-- Topbar — dùng fragment -->
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <!-- Main content -->
+  <main class="main">
+
+    <!-- Page header -->
+    <div class="page-header">
+      <div>
+        <h2>📊 Dashboard – Tổng quan</h2>
+        <div class="breadcrumb">
+          <span>Trang chủ</span>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Dashboard</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+
+      <div class="stat-card blue">
+        <div class="stat-icon">📦</div>
+        <div class="stat-num"
+             th:text="${tongHangHoa}"
+             th:attr="data-target=${tongHangHoa}">0</div>
+        <div class="stat-label">Tổng hàng hóa</div>
+        <div class="stat-sub up">
+          <i class="bi bi-arrow-up-short"></i> Đang hoạt động
+        </div>
+      </div>
+
+      <div class="stat-card green">
+        <div class="stat-icon">👥</div>
+        <div class="stat-num"
+             th:text="${tongNhanVien}"
+             th:attr="data-target=${tongNhanVien}">0</div>
+        <div class="stat-label">Nhân viên</div>
+        <div class="stat-sub up">
+          <i class="bi bi-arrow-up-short"></i> Hoạt động
+        </div>
+      </div>
+
+      <div class="stat-card yellow">
+        <div class="stat-icon">📥</div>
+        <div class="stat-num"
+             th:text="${phieuNhapChoDuyet}"
+             th:attr="data-target=${phieuNhapChoDuyet}">0</div>
+        <div class="stat-label">Phiếu nhập chờ</div>
+        <div class="stat-sub warn"
+             th:if="${phieuNhapChoDuyet > 0}">
+          <i class="bi bi-hourglass-split"></i> Cần xử lý
+        </div>
+        <div class="stat-sub up" th:unless="${phieuNhapChoDuyet > 0}">
+          <i class="bi bi-check-circle"></i> Đã xử lý hết
+        </div>
+      </div>
+
+      <div class="stat-card purple">
+        <div class="stat-icon">📤</div>
+        <div class="stat-num"
+             th:text="${phieuXuatChoDuyet}"
+             th:attr="data-target=${phieuXuatChoDuyet}">0</div>
+        <div class="stat-label">Phiếu xuất chờ</div>
+        <div class="stat-sub warn" th:if="${phieuXuatChoDuyet > 0}">
+          <i class="bi bi-hourglass-split"></i> Cần xử lý
+        </div>
+        <div class="stat-sub up" th:unless="${phieuXuatChoDuyet > 0}">
+          <i class="bi bi-check-circle"></i> Đã xử lý hết
+        </div>
+      </div>
+
+      <div class="stat-card red">
+        <div class="stat-icon">🔔</div>
+        <div class="stat-num"
+             th:text="${tongCanhBao}"
+             th:attr="data-target=${tongCanhBao}">0</div>
+        <div class="stat-label">Cảnh báo</div>
+        <div class="stat-sub danger" th:if="${tongCanhBao > 0}">
+          <i class="bi bi-exclamation-triangle"></i> Cần xử lý!
+        </div>
+        <div class="stat-sub up" th:unless="${tongCanhBao > 0}">
+          <i class="bi bi-shield-check"></i> Ổn định
+        </div>
+      </div>
+
+    <div style="font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;">
+      ⚡ Thao tác nhanh
+    </div>
+    <div class="qa-grid">
+      <a class="qa-btn" th:href="@{/hanghoa/add}">
+        <span class="qa-icon">📦</span> Thêm hàng hóa
+      </a>
+      <a class="qa-btn" th:href="@{/phieunhap/add}">
+        <span class="qa-icon">📥</span> Tạo phiếu nhập
+      </a>
+      <a class="qa-btn" th:href="@{/phieuxuat/add}">
+        <span class="qa-icon">📤</span> Tạo phiếu xuất
+      </a>
+      <a class="qa-btn" th:href="@{/canhbao}">
+        <span class="qa-icon">🔔</span> Xem cảnh báo
+      </a>
+      <a class="qa-btn" th:href="@{/baocao/tonkho}">
+        <span class="qa-icon">📊</span> Xuất báo cáo
+      </a>
+    </div>
+
+
+    <div class="row-7-5">
+
+      <!-- Cột trái: bảng hàng tồn kho thấp -->
+      <div class="data-card">
+        <div class="data-card-header">
+          <h5>⚠️ Hàng tồn kho thấp</h5>
+          <a class="btn btn-ghost btn-sm" th:href="@{/hanghoa}">
+            Xem tất cả <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+
+     
+        <div class="data-card-body" th:if="${#lists.isEmpty(hangTonKhoThap)}"
+             style="text-align:center;padding:30px;color:var(--txt2)">
+          <i class="bi bi-check-circle-fill" style="font-size:28px;color:var(--green);display:block;margin-bottom:8px"></i>
+          Tất cả hàng hóa đang ở mức tồn kho an toàn!
+        </div>
+
+        <table class="tbl" th:unless="${#lists.isEmpty(hangTonKhoThap)}">
+          <thead>
+            <tr>
+              <th>Mã hàng</th>
+              <th>Tên hàng</th>
+              <th>Tồn / Tối thiểu</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+          
+            <tr th:each="h : ${hangTonKhoThap}">
+              <td>
+                <code class="mono" th:text="${h.maHang}">HH001</code>
+              </td>
+              <td>
+                <strong th:text="${h.tenHang}">Tên hàng</strong>
+              </td>
+              <td>
+                <div class="flex-gap">
+                  <span class="text-red fw-bold" th:text="${h.soLuongTon}">0</span>
+                  <span class="text-muted">/</span>
+                  <span class="text-muted" th:text="${h.soLuongToiThieu}">10</span>
+            
+                  <div class="stock-bar" style="flex:1;min-width:60px">
+                    <div th:class="${h.soLuongTon * 2 < h.soLuongToiThieu} ? 'stock-fill low' : 'stock-fill warn'"
+                         th:attr="style='width:' + ${#numbers.formatDecimal(h.soLuongTon * 100.0 / h.soLuongToiThieu, 0, 0)} + '%'">
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="badge badge-low">⚠ Cần nhập</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div><!-- /col-left -->
+
+      <!-- Cột phải: danh sách cảnh báo chưa xử lý -->
+      <div class="data-card">
+        <div class="data-card-header">
+          <h5>🔔 Cảnh báo chưa xử lý</h5>
+          <a class="btn btn-ghost btn-sm" th:href="@{/canhbao}">
+            Xem tất <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+        <div class="data-card-body">
+
+          <!-- Khi không có cảnh báo nào -->
+          <div th:if="${#lists.isEmpty(canhBaoChuaXuLy)}"
+               style="text-align:center;padding:20px;color:var(--txt2)">
+            <i class="bi bi-shield-check-fill" style="font-size:28px;color:var(--green);display:block;margin-bottom:8px"></i>
+            Không có cảnh báo nào!
+          </div>
+
+      
+          <div th:each="cb, stat : ${canhBaoChuaXuLy}"
+               th:if="${stat.index < 5}"
+               class="alert-item">
+
+            <!-- Màu chấm tùy loại cảnh báo -->
+            <div th:class="${cb.loaiCanhBao == 'TON_KHO_THAP'} ? 'alert-dot red' :
+                            (${cb.loaiCanhBao == 'HAN_SU_DUNG'} ? 'alert-dot yellow' :
+                            (${cb.loaiCanhBao == 'XUAT_BAT_THUONG'} ? 'alert-dot orange' : 'alert-dot blue'))">
+            </div>
+
+            <div class="alert-content">
+              <!-- Icon và tiêu đề tùy loại -->
+              <strong>
+                <span th:switch="${cb.loaiCanhBao}">
+                  <span th:case="'TON_KHO_THAP'">🔴 Tồn kho thấp</span>
+                  <span th:case="'HAN_SU_DUNG'">🟡 Sắp hết hạn</span>
+                  <span th:case="'XUAT_BAT_THUONG'">🟠 Xuất bất thường</span>
+                  <span th:case="*">🔵 Thông báo</span>
+                </span>
+              </strong>
+              <p th:text="${cb.noiDung}">Nội dung cảnh báo</p>
+            </div>
+            <div class="alert-time" th:text="${cb.thoiGian}">—</div>
+          </div>
+
+        </div>
+      </div><!-- /col-right -->
+
+    </div><!-- /row-7-5 -->
+
+    <div class="footer-bar">
+      🏭 Smart Warehouse Management System &nbsp;·&nbsp;
+      OOP Project 2025 &nbsp;·&nbsp;
+      Java Spring Boot + Thymeleaf + MySQL
+    </div>
+
+  </main><!-- /main -->
+</div><!-- /layout-wrap -->
+
+<!-- Toast + Flash -->
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<!-- Delete modal -->
+<div th:replace="~{fragments/layout :: deleteModal}"></div>
+<!-- Scripts chung -->
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+  /* ── Counter animation: số tăng dần khi trang load ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('[data-target]').forEach(el => {
+      const target = parseInt(el.getAttribute('data-target'), 10) || 0;
+      if (target === 0) return;
+      let cur = 0;
+      const step = Math.max(1, Math.ceil(target / 50));
+      const timer = setInterval(() => {
+        cur = Math.min(cur + step, target);
+        el.textContent = cur.toLocaleString('vi-VN');
+        if (cur >= target) clearInterval(timer);
+      }, 18);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>👥 Nhân viên – Smart Warehouse</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body>
+<div class="layout-wrap">
+  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+  <div th:replace="~{fragments/layout :: topbar}"></div>
+
+  <main class="main">
+    <div class="page-header">
+      <div>
+        <h2>👥 Quản lý Nhân viên</h2>
+        <div class="breadcrumb">
+          <a th:href="@{/dashboard}">Trang chủ</a>
+          <i class="bi bi-chevron-right" style="font-size:10px"></i>
+          <span>Nhân viên</span>
+        </div>
+      </div>
+      <!-- Chỉ admin mới được thêm nhân viên -->
+      <a class="btn btn-success" th:href="@{/nhanvien/add}"
+         th:if="${vaiTro == 'admin'}">
+        <i class="bi bi-plus-lg"></i> Thêm nhân viên
+      </a>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <div class="inp-search-wrap">
+        <i class="bi bi-search"></i>
+        <input class="inp-search" id="search-inp" type="text"
+               placeholder="Tìm theo mã NV, họ tên, email..."/>
+      </div>
+      <select class="filter-select" id="filter-role" onchange="filterNV()">
+        <option value="">Tất cả vai trò</option>
+        <option value="admin">🔴 Admin</option>
+        <option value="quan_ly">🟡 Quản lý</option>
+        <option value="nhan_vien">⚪ Nhân viên</option>
+      </select>
+    </div>
+
+    <div class="data-card">
+      <div th:if="${#lists.isEmpty(danhSachNV)}"
+           style="text-align:center;padding:50px;color:var(--txt2)">
+        <i class="bi bi-people" style="font-size:44px;display:block;margin-bottom:14px;color:var(--txt3)"></i>
+        <h5>Chưa có nhân viên nào</h5>
+      </div>
+
+      <div style="overflow-x:auto" th:unless="${#lists.isEmpty(danhSachNV)}">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Mã NV</th>
+              <th>Họ tên</th>
+              <th>Email</th>
+              <th>Số điện thoại</th>
+              <th>Vai trò</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <tr th:each="nv : ${danhSachNV}"
+                th:attr="data-role=${nv.vaiTro}">
+              <td><code class="mono" th:text="${nv.maNV}">NV001</code></td>
+              <td>
+                <div class="flex-gap">
+                  <!-- Avatar với 2 ký tự đầu của họ tên -->
+                  <div class="avatar" style="width:30px;height:30px;font-size:11px;flex-shrink:0"
+                       th:text="${#strings.substring(nv.hoTen, 0, 2)}">NV</div>
+                  <strong th:text="${nv.hoTen}">Họ tên</strong>
+                </div>
+              </td>
+              <td class="text-muted" th:text="${nv.email}">email@example.com</td>
+              <td class="text-muted" th:text="${nv.soDienThoai}">0901 000 000</td>
+              <td>
+                <span th:switch="${nv.vaiTro}">
+                  <span th:case="'admin'"     class="badge badge-admin">🔴 ADMIN</span>
+                  <span th:case="'quan_ly'"   class="badge badge-quanly">🟡 QUẢN LÝ</span>
+                  <span th:case="'nhan_vien'" class="badge badge-nhanvien">⚪ NHÂN VIÊN</span>
+                  <span th:case="*"           class="badge badge-draft" th:text="${nv.vaiTro}">—</span>
+                </span>
+              </td>
+              <td>
+                <div class="flex-gap">
+                  <!-- Chỉ admin mới được sửa/xóa nhân viên -->
+                  <a class="btn btn-warning btn-sm"
+                     th:if="${vaiTro == 'admin'}"
+                     th:href="@{/nhanvien/edit/{id}(id=${nv.maNV})}"
+                     title="Sửa">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <!--
+                    Không cho phép xóa chính mình!
+                    ${currentUser.maNV != nv.maNV} — so sánh mã người đang đăng nhập với mã nhân viên trong bảng.
+                  -->
+                  <button class="btn btn-danger btn-sm"
+                          th:if="${vaiTro == 'admin' and currentUser.maNV != nv.maNV}"
+                          th:onclick="'confirmDelete(\'' + ${nv.hoTen} + '\', \'' + @{/nhanvien/delete/{id}(id=${nv.maNV})} + '\')'">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                  <!-- Xem lịch sử thao tác của nhân viên này -->
+                  <a class="btn btn-ghost btn-sm"
+                     th:href="@{/lichsu/nhanvien/{id}(id=${nv.maNV})}"
+                     title="Xem lịch sử">
+                    <i class="bi bi-clock-history"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" th:unless="${#lists.isEmpty(danhSachNV)}">
+        <span class="pg-info">Tổng <strong th:text="${danhSachNV.size()}">0</strong> nhân viên</span>
+        <div class="pg-btns">
+          <button class="pg-btn">‹</button>
+          <button class="pg-btn active">1</button>
+          <button class="pg-btn">›</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div th:replace="~{fragments/layout :: toastArea}"></div>
+<div th:replace="~{fragments/layout :: deleteModal}"></div>
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script th:src="@{/js/app.js}" defer></script>
+<script>
+  function filterNV() {
+    const role   = document.getElementById('filter-role').value;
+    const search = (document.getElementById('search-inp').value || '').toLowerCase();
+    document.querySelectorAll('#table-body tr').forEach(row => {
+      const matchR = !role   || row.dataset.role === role;
+      const matchQ = !search || row.textContent.toLowerCase().includes(search);
+      row.style.display = (matchR && matchQ) ? '' : 'none';
+    });
+  }
+  document.getElementById('search-inp').addEventListener('input', filterNV);
+</script>
+</body>
+</html>
