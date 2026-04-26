@@ -1,240 +1,581 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🏭 Smart Warehouse – Đăng nhập</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Warehouse – Đăng nhập</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
 
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+<style>
+/* ═══════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: #080c14;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden; /* không scroll vì canvas full-screen */
+}
 
-  <link rel="stylesheet" th:href="@{/css/style.css}"/>
+/* ═══════════════════════════════════════
+   CANVAS – FULL SCREEN BACKGROUND
+   Canvas nằm fixed phía sau, z-index 0
+   Toàn bộ animation chạy ở đây:
+   starfield + lerp dot + bezier trail
+═══════════════════════════════════════ */
+#canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  /* pointer-events: none để mouse event xuyên qua canvas đến các element bên trên */
+  pointer-events: none;
+}
 
-  <style>
-  
-    body {
-      display: flex; align-items: center; justify-content: center;
-      min-height: 100vh;
-      background: radial-gradient(ellipse at 20% 50%, #0d1f3c 0%, #0d1117 65%);
-    }
+/* ═══════════════════════════════════════
+   LOGIN CARD – NỔI TRÊN CANVAS
+═══════════════════════════════════════ */
+.login-wrap {
+  position: relative;
+  z-index: 10;
+  width: 420px;
+  max-width: 95vw;
+}
 
-    #login-canvas {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    }
+.login-card {
+  background: rgba(14, 20, 35, 0.82);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(99, 179, 237, 0.18);
+  border-radius: 24px;
+  padding: 48px 44px 40px;
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(99, 179, 237, 0.06),
+    /* glow nhẹ phía dưới card, hòa với màu nền */
+    0 0 60px rgba(56, 120, 220, 0.08);
+  animation: cardIn 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 
-    .login-card {
-      position: relative; z-index: 1;
-      width: 420px; max-width: 95vw;
-      background: rgba(22,27,34,.88);
-      backdrop-filter: blur(24px);
-      border: 1px solid rgba(124,58,237,.25);
-      border-radius: 24px;
-      padding: 48px 44px 40px;
-      box-shadow: 0 30px 80px rgba(0,0,0,.6), 0 0 60px rgba(124,58,237,.08);
-      animation: cardIn .6s cubic-bezier(.16,1,.3,1) both;
-    }
-    @keyframes cardIn {
-      from { opacity: 0; transform: translateY(40px) scale(.97); }
-      to   { opacity: 1; transform: translateY(0)   scale(1);    }
-    }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(36px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
 
-    .login-icon {
-      width: 72px; height: 72px; margin: 0 auto 20px;
-      background: linear-gradient(135deg, #5b21b6, #7c3aed);
-      border-radius: 20px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 34px;
-      box-shadow: 0 8px 30px rgba(124,58,237,.45);
-      animation: pulse 3s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 8px 30px rgba(124,58,237,.45); }
-      50%       { box-shadow: 0 8px 50px rgba(124,58,237,.75); }
-    }
+/* ── Logo icon ── */
+.logo-icon {
+  width: 72px; height: 72px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, #1a56db, #3b82f6);
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.45);
+  animation: logoPulse 3s ease-in-out infinite;
+}
+@keyframes logoPulse {
+  0%, 100% { box-shadow: 0 8px 32px rgba(59, 130, 246, 0.45); }
+  50%       { box-shadow: 0 8px 52px rgba(59, 130, 246, 0.75); }
+}
 
-    .login-title { text-align: center; font-family: 'Space Grotesk', sans-serif; font-weight: 800; font-size: 24px; color: #fff; }
-    .login-sub   { text-align: center; font-size: 13px; color: var(--txt2); margin-bottom: 32px; }
+/* ── Title ── */
+.login-title {
+  text-align: center;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800; font-size: 23px;
+  color: #fff;
+  letter-spacing: -0.3px;
+}
+.login-sub {
+  text-align: center;
+  font-size: 13px; color: #6b7fa3;
+  margin-top: 6px; margin-bottom: 32px;
+}
 
-    /* Input group (icon + field) */
-    .inp-group { position: relative; margin-bottom: 16px; }
-    .inp-group label { display: block; font-size: 12px; font-weight: 600; color: var(--txt2); margin-bottom: 7px; text-transform: uppercase; letter-spacing: .4px; }
-    .inp-group i { position: absolute; left: 13px; bottom: 11px; color: var(--txt3); font-size: 15px; }
-    .inp-group input {
-      width: 100%; background: rgba(255,255,255,.04);
-      border: 1.5px solid var(--border);
-      border-radius: var(--radius-sm); color: var(--txt);
-      font-family: 'DM Sans', sans-serif; font-size: 14px;
-      padding: 11px 14px 11px 40px; outline: none;
-      transition: border-color .2s, box-shadow .2s;
-    }
-    .inp-group input:focus {
-      border-color: var(--acc);
-      box-shadow: 0 0 0 3px var(--acc-glow);
-    }
-    .inp-group input::placeholder { color: var(--txt3); }
+/* ── Error box (ẩn mặc định, hiện khi sai pass) ── */
+.error-box {
+  display: none;
+  align-items: center; gap: 9px;
+  padding: 11px 14px; margin-bottom: 18px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  border-radius: 10px;
+  font-size: 13px; color: #fca5a5;
+  animation: shake 0.35s ease;
+}
+.error-box.show { display: flex; }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
+}
 
-    .eye-btn {
-      position: absolute; right: 12px; bottom: 9px;
-      background: none; border: none; color: var(--txt3);
-      cursor: pointer; padding: 4px; font-size: 15px;
-      transition: color .15s;
-    }
-    .eye-btn:hover { color: var(--txt2); }
+/* ── Form group ── */
+.form-group { margin-bottom: 16px; }
 
-    .btn-login {
-      width: 100%; padding: 13px;
-      background: linear-gradient(135deg, #5b21b6, #7c3aed);
-      border: none; border-radius: var(--radius-sm);
-      color: #fff; font-family: 'DM Sans', sans-serif;
-      font-size: 15px; font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(124,58,237,.4);
-      transition: transform .15s, box-shadow .15s;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .btn-login:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 30px rgba(124,58,237,.55);
-    }
+.form-group label {
+  display: block;
+  font-size: 11.5px; font-weight: 700;
+  color: #6b7fa3;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
 
-    .login-hint {
-      margin-top: 20px; padding: 10px 14px;
-      background: rgba(124,58,237,.08);
-      border: 1px solid rgba(124,58,237,.15);
-      border-radius: var(--radius-sm);
-      font-size: 12px; color: var(--txt2);
-    }
+.inp-wrap { position: relative; }
+.inp-wrap .inp-icon {
+  position: absolute; left: 13px; top: 50%;
+  transform: translateY(-50%);
+  color: #3d5273; font-size: 15px;
+  /* icon chuyển màu khi input focus */
+  transition: color 0.2s;
+}
+/* khi input trong wrap được focus thì đổi màu icon */
+.inp-wrap:focus-within .inp-icon { color: #3b82f6; }
 
-    .error-box {
-      display: flex; align-items: center; gap: 8px;
-      padding: 11px 14px; margin-bottom: 18px;
-      background: rgba(239,68,68,.1);
-      border: 1px solid rgba(239,68,68,.2);
-      border-radius: var(--radius-sm);
-      font-size: 13px; color: #fca5a5;
-    }
-  </style>
+.inp-wrap input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 11px;
+  color: #e2e8f0;
+  font-family: 'DM Sans', sans-serif; font-size: 14px;
+  padding: 11px 14px 11px 40px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.inp-wrap input::placeholder { color: #3d5273; }
+.inp-wrap input:focus {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.05);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+/* Nút hiện/ẩn mật khẩu */
+.eye-btn {
+  position: absolute; right: 11px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  color: #3d5273; cursor: pointer; padding: 4px;
+  font-size: 15px;
+  transition: color 0.15s;
+}
+.eye-btn:hover { color: #6b7fa3; }
+
+/* ── Submit button ── */
+.btn-login {
+  width: 100%; margin-top: 6px; padding: 13px;
+  background: linear-gradient(135deg, #1a56db 0%, #3b82f6 100%);
+  border: none; border-radius: 12px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; letter-spacing: 0.2px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.42);
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+.btn-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.58);
+  filter: brightness(1.08);
+}
+.btn-login:active { transform: translateY(0); }
+
+/* ── Hint box bên dưới ── */
+.login-hint {
+  margin-top: 22px; padding: 11px 14px;
+  background: rgba(59, 130, 246, 0.07);
+  border: 1px solid rgba(59, 130, 246, 0.14);
+  border-radius: 10px;
+  font-size: 12px; color: #4d6a9a; line-height: 1.65;
+}
+.login-hint strong { color: #6b8fc4; }
+
+/* ── Divider ── */
+.divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 22px 0 18px;
+}
+.divider::before, .divider::after {
+  content: ''; flex: 1;
+  height: 1px; background: rgba(255,255,255,0.06);
+}
+.divider span { font-size: 11px; color: #3d5273; white-space: nowrap; }
+
+/* ── Register link ── */
+.register-link {
+  text-align: center;
+  font-size: 13px; color: #4d6a9a;
+}
+.register-link a {
+  color: #3b82f6; font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.register-link a:hover { color: #60a5fa; text-decoration: underline; }
+
+/* ── Footer nhỏ ── */
+.login-footer {
+  text-align: center;
+  margin-top: 24px;
+  font-size: 11px; color: #2a3a52;
+}
+</style>
 </head>
+
 <body>
 
-  <canvas id="login-canvas"></canvas>
+<!-- ═══════════════════════════════════════
+     CANVAS – toàn bộ animation chạy ở đây
+     JavaScript bên dưới giải thích từng lớp
+═══════════════════════════════════════ -->
+<canvas id="canvas"></canvas>
 
+<!-- ═══════════════════════════════════════
+     LOGIN CARD
+═══════════════════════════════════════ -->
+<div class="login-wrap">
   <div class="login-card">
-    <!-- Logo -->
-    <div class="login-icon">🏭</div>
+
+    <div class="logo-icon">🏭</div>
     <div class="login-title">Smart Warehouse</div>
     <div class="login-sub">Hệ thống Quản lý Kho Thông Minh</div>
 
-
-    <div class="error-box" th:if="${error}">
+    <!-- Error: hiện khi sai tài khoản -->
+    <div class="error-box" id="err-box">
       <i class="bi bi-exclamation-triangle-fill"></i>
-      <span th:text="${error}">Mã nhân viên hoặc mật khẩu không đúng!</span>
+      Mã nhân viên hoặc mật khẩu không đúng!
     </div>
 
-
-    <form th:action="@{/login}" method="post">
-      <div class="inp-group">
-        <label for="maNV">👤 Mã nhân viên</label>
-        <i class="bi bi-person-badge"></i>
-        <input type="text" id="maNV" name="maNV" placeholder="Nhập mã NV (VD: NV001)" autocomplete="off" required/>
+    <!-- Form – khi tích hợp Thymeleaf đổi thành:
+         <form th:action="@{/login}" method="post"> -->
+      <form id="login-form" th:action="@{/login}" method="post">
+      <div class="form-group">
+        <label for="maNV">Mã nhân viên</label>
+        <div class="inp-wrap">
+          <i class="bi bi-person-badge inp-icon"></i>
+          <input type="text" id="maNV" name="maNV"
+                 placeholder="VD: NV001" autocomplete="off"/>
+        </div>
       </div>
 
-      <div class="inp-group">
-        <label for="matKhau">🔒 Mật khẩu</label>
-        <i class="bi bi-lock"></i>
-        <input type="password" id="matKhau" name="matKhau" placeholder="Nhập mật khẩu" required/>
-        <button type="button" class="eye-btn" onclick="togglePass()" id="eye-btn">
-          <i class="bi bi-eye" id="eye-icon"></i>
-        </button>
+      <div class="form-group">
+        <label for="matKhau">Mật khẩu</label>
+        <div class="inp-wrap">
+          <i class="bi bi-lock inp-icon"></i>
+          <input type="password" id="matKhau" name="matKhau"
+                 placeholder="Nhập mật khẩu"/>
+          <button type="button" class="eye-btn" onclick="togglePass()">
+            <i class="bi bi-eye" id="eye-ico"></i>
+          </button>
+        </div>
       </div>
 
       <button type="submit" class="btn-login">
-        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập hệ thống
+        <i class="bi bi-box-arrow-in-right"></i>
+        Đăng nhập hệ thống
       </button>
     </form>
 
     <div class="login-hint">
-      <i class="bi bi-info-circle"></i>
-      <strong>Tài khoản demo:</strong> NV001 / admin123 &nbsp;·&nbsp; NV002 / ql123 &nbsp;·&nbsp; NV003 / nv123
+      <strong>Demo:</strong> NV001 / admin123
+      &nbsp;·&nbsp; NV002 / ql123
+      &nbsp;·&nbsp; NV003 / nv123
+    </div>
+
+    <div class="divider"><span>hoặc</span></div>
+
+    <div class="register-link">
+      Tài khoản mới? <a href="/register">Liên hệ quản trị viên</a>
     </div>
   </div>
 
-  <script>
-  
-    (function () {
-      const canvas = document.getElementById('login-canvas');
-      const ctx = canvas.getContext('2d');
-      let W, H, particles = [];
-
-      const resize = () => { W = canvas.width = innerWidth; H = canvas.height = innerHeight; };
-      resize();
-      window.addEventListener('resize', resize);
-
-  
-      for (let i = 0; i < 55; i++) {
-        particles.push({
-          x: Math.random() * 1400, y: Math.random() * 900,
-          vx: (Math.random() - .5) * .35,
-          vy: (Math.random() - .5) * .35,
-          r: Math.random() * 1.8 + .5
-        });
-      }
-
- 
-      function draw() {
-        ctx.clearRect(0, 0, W, H);
-
-        particles.forEach(p => {
-          p.x += p.vx; p.y += p.vy;
-          if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
-          if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
-        });
-        for (let i = 0; i < particles.length; i++) {
-          for (let j = i + 1; j < particles.length; j++) {
-            const dx = particles[i].x - particles[j].x;
-            const dy = particles[i].y - particles[j].y;
-            const d = Math.sqrt(dx * dx + dy * dy);
-            if (d < 150) {
-              ctx.beginPath();
-              ctx.strokeStyle = `rgba(124,58,237,${.1 * (1 - d / 150)})`;
-              ctx.lineWidth = .7;
-              ctx.moveTo(particles[i].x, particles[i].y);
-              ctx.lineTo(particles[j].x, particles[j].y);
-              ctx.stroke();
-            }
-          }
-        }
-
-        particles.forEach(p => {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(159,103,250,.25)';
-          ctx.fill();
-        });
-        requestAnimationFrame(draw);
-      }
-      draw();
-    })();
+  <div class="login-footer">
+    Smart Warehouse Management System &nbsp;·&nbsp; OOP Project 2025
+  </div>
+</div>
 
 
-    function togglePass() {
-      const inp = document.getElementById('matKhau');
-      const ico = document.getElementById('eye-icon');
-      if (inp.type === 'password') {
-        inp.type = 'text';
-        ico.className = 'bi bi-eye-slash';
-      } else {
-        inp.type = 'password';
-        ico.className = 'bi bi-eye';
-      }
-    }
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   CANVAS ANIMATION – 3 LỚP CHỒNG NHAU
 
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.querySelector('form').submit();
+   Lớp 1: Star field – các chấm nhỏ nhấp nháy như sao
+   Lớp 2: Lerp dot – chấm tròn glowing đuổi theo chuột
+   Lớp 3: Bezier trail – vệt cong mờ dần phía sau dot
+
+   Tất cả vẽ lên cùng một canvas mỗi frame (requestAnimationFrame)
+═══════════════════════════════════════════════════════════════════ */
+(function () {
+  const canvas = document.getElementById('canvas');
+  const ctx    = canvas.getContext('2d');
+
+  /* ── Resize canvas theo cửa sổ ── */
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* ════════════════════════════════
+     LỚP 1 – STAR FIELD
+     Tạo một lần, vẽ lại mỗi frame
+  ════════════════════════════════ */
+  const STAR_COUNT = 180;
+  const stars = [];
+
+  for (let i = 0; i < STAR_COUNT; i++) {
+    stars.push({
+      x:       Math.random(),        // vị trí theo tỷ lệ (0-1) để responsive
+      y:       Math.random(),
+      r:       Math.random() * 1.2 + 0.2,
+      baseA:   Math.random() * 0.5 + 0.1,  // opacity gốc
+      phase:   Math.random() * Math.PI * 2, // phase lệch để nhấp nháy không đồng bộ
+      speed:   Math.random() * 0.008 + 0.003 // tốc độ nhấp nháy
     });
-  </script>
+  }
+
+  function drawStars(t) {
+    stars.forEach(s => {
+      /* opacity dao động theo sin → hiệu ứng nhấp nháy */
+      const alpha = s.baseA * (0.6 + 0.4 * Math.sin(t * s.speed + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(200, 220, 255, ${alpha})`;
+      ctx.fill();
+    });
+  }
+
+  /* ════════════════════════════════
+     LỚP 2 – LERP DOT
+     Vị trí chuột thực: mouse.x / mouse.y
+     Vị trí dot:        dot.x  / dot.y
+
+     Mỗi frame: dot tiến thêm LERP_FACTOR %
+     khoảng cách còn lại đến chuột.
+
+     LERP_FACTOR nhỏ → dot lười (heavy, có quán tính)
+     LERP_FACTOR lớn → dot nhanh (nhẹ, responsive)
+  ════════════════════════════════ */
+  const LERP_FACTOR = 0.072;
+
+  /* Khởi tạo dot ở giữa màn hình */
+  const dot = {
+    x: window.innerWidth  / 2,
+    y: window.innerHeight / 2
+  };
+
+  /* Chuột bắt đầu ở giữa, cập nhật khi di chuyển */
+  const mouse = {
+    x: window.innerWidth  / 2,
+    y: window.innerHeight / 2
+  };
+
+  /* Lắng nghe mousemove trên TOÀN bộ document
+     (canvas có pointer-events: none nên dùng document) */
+  document.addEventListener('mousemove', e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+  });
+
+  function updateDot() {
+    /* Công thức Lerp: current += (target - current) * factor
+       Mỗi frame dot đi thêm LERP_FACTOR * khoảng cách còn lại
+       → tiếp cận theo hàm mũ giảm dần (exponential decay) */
+    dot.x += (mouse.x - dot.x) * LERP_FACTOR;
+    dot.y += (mouse.y - dot.y) * LERP_FACTOR;
+  }
+
+  function drawDot() {
+    /* Glow effect: vẽ shadowBlur TRƯỚC khi vẽ arc
+       shadowBlur chỉ áp dụng cho lần draw tiếp theo */
+    ctx.save();
+    ctx.shadowBlur  = 22;
+    ctx.shadowColor = 'rgba(99, 200, 255, 0.9)';
+
+    /* Vòng ngoài mờ hơn (halo) */
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 7, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(99, 200, 255, 0.15)';
+    ctx.fill();
+
+    /* Core sáng */
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(150, 220, 255, 0.95)';
+    ctx.fill();
+
+    /* Điểm trung tâm trắng nhất */
+    ctx.beginPath();
+    ctx.arc(dot.x, dot.y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  /* ════════════════════════════════
+     LỚP 3 – BEZIER TRAIL
+     Lưu TRAIL_LENGTH vị trí cũ của dot.
+     Mỗi frame push vị trí mới, xóa vị trí cũ nhất.
+     Vẽ đường cong qua các điểm bằng quadraticCurveTo.
+
+     Trick quan trọng: thay vì nối thẳng (gãy khúc),
+     dùng TRUNG ĐIỂM làm control point → đường mượt tự nhiên.
+  ════════════════════════════════ */
+  const TRAIL_LENGTH = 28;
+  const trail = [];
+
+  /* Khởi tạo trail ở giữa màn hình */
+  for (let i = 0; i < TRAIL_LENGTH; i++) {
+    trail.push({ x: dot.x, y: dot.y });
+  }
+
+  function updateTrail() {
+    /* Đưa vị trí dot hiện tại vào đầu mảng */
+    trail.unshift({ x: dot.x, y: dot.y });
+    /* Xóa phần tử cũ nhất để giữ độ dài cố định */
+    trail.pop();
+  }
+
+  function drawTrail() {
+    if (trail.length < 2) return;
+
+    /* Vẽ từng segment, độ mờ giảm dần theo index */
+    for (let i = 0; i < trail.length - 1; i++) {
+      /* i=0 gần dot nhất → sáng nhất
+         i=TRAIL_LENGTH gần đuôi → mờ nhất */
+      const t      = i / (trail.length - 1);
+      const alpha  = (1 - t) * 0.55; /* max 0.55, fade về 0 */
+      const width  = (1 - t) * 2.2;  /* dày gần dot, mảnh ở đuôi */
+
+      /* Tính trung điểm giữa điểm i và i+1
+         Đây là điểm bắt đầu của đoạn cong */
+      const midX = (trail[i].x + trail[i + 1].x) / 2;
+      const midY = (trail[i].y + trail[i + 1].y) / 2;
+
+      /* Trung điểm tiếp theo */
+      const nextMidX = (trail[i + 1].x + (trail[i + 2]?.x ?? trail[i + 1].x)) / 2;
+      const nextMidY = (trail[i + 1].y + (trail[i + 2]?.y ?? trail[i + 1].y)) / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(midX, midY);
+      /* quadraticCurveTo(control point, end point)
+         Control point là trail[i+1] (điểm thực)
+         End point là trung điểm tiếp → đường tự động mượt */
+      ctx.quadraticCurveTo(trail[i + 1].x, trail[i + 1].y, nextMidX, nextMidY);
+
+      ctx.strokeStyle = `rgba(99, 200, 255, ${alpha})`;
+      ctx.lineWidth   = width;
+      ctx.lineCap     = 'round';
+      ctx.stroke();
+    }
+  }
+
+  /* ════════════════════════════════
+     GRADIENT NỀN
+     Vẽ lại mỗi frame để đảm bảo canvas sạch
+     trước khi vẽ các lớp animation lên
+  ════════════════════════════════ */
+  function drawBackground() {
+    const w = canvas.width;
+    const h = canvas.height;
+
+    /* Gradient tĩnh: tím đậm góc trái → navy ở giữa → tím-xanh góc phải */
+    const grad = ctx.createRadialGradient(
+      w * 0.25, h * 0.45, 0,  /* tâm gradient */
+      w * 0.5,  h * 0.5,  w * 0.8
+    );
+    grad.addColorStop(0,   '#0f1e3d');
+    grad.addColorStop(0.4, '#08112a');
+    grad.addColorStop(0.75,'#06090f');
+    grad.addColorStop(1,   '#080c14');
+
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+  }
+
+  /* ════════════════════════════════
+     RENDER LOOP
+     requestAnimationFrame gọi draw() liên tục
+     ~60fps trên màn hình 60Hz
+  ════════════════════════════════ */
+  let t = 0; /* thời gian tăng dần cho animation nhấp nháy */
+
+  function draw() {
+    t += 1;
+
+    /* Thứ tự vẽ quan trọng: vẽ sau = nằm trên */
+    drawBackground();   /* 1. nền gradient */
+    drawStars(t);       /* 2. sao phía sau */
+    drawTrail();        /* 3. vệt bezier */
+    drawDot();          /* 4. dot – nằm trên cùng */
+
+    /* Cập nhật vị trí cho frame tiếp theo */
+    updateDot();
+    updateTrail();
+
+    requestAnimationFrame(draw);
+  }
+
+  draw(); /* kick off */
+})();
+
+
+/* ═══════════════════════════════════════
+   FORM LOGIC – LOGIN / TOGGLE PASSWORD
+═══════════════════════════════════════ */
+
+/* Demo accounts – khi tích hợp Spring Boot thì xóa phần này
+   và để form submit về /login như bình thường */
+const DEMO_USERS = {
+  'NV001': 'admin123',
+  'NV002': 'ql123',
+  'NV003': 'nv123'
+};
+
+function doLogin(e) {
+  e.preventDefault();
+  const maNV    = document.getElementById('maNV').value.trim();
+  const matKhau = document.getElementById('matKhau').value.trim();
+  const errBox  = document.getElementById('err-box');
+
+  if (DEMO_USERS[maNV] === matKhau) {
+    errBox.classList.remove('show');
+    /* Thực tế: redirect về dashboard */
+    alert(`✅ Chào mừng ${maNV}! Đang chuyển về Dashboard...`);
+  } else {
+    /* Xóa rồi add lại để trigger animation shake mỗi lần */
+    errBox.classList.remove('show');
+    void errBox.offsetWidth; /* force reflow */
+    errBox.classList.add('show');
+  }
+}
+
+function togglePass() {
+  const inp = document.getElementById('matKhau');
+  const ico = document.getElementById('eye-ico');
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    ico.className = 'bi bi-eye-slash';
+  } else {
+    inp.type = 'password';
+    ico.className = 'bi bi-eye';
+  }
+}
+
+/* Enter để submit */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-form').requestSubmit();
+});
+</script>
 </body>
 </html>
+EOF
+echo "Done"
