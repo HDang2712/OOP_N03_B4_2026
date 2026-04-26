@@ -1,409 +1,583 @@
 <!DOCTYPE html>
-<!--
-  dashboard.html — Trang tổng quan chính
-  src/main/resources/templates/dashboard.html
-
-  Biến nhận từ HomeController:
-    currentUser, vaiTro
-    tongHangHoa, tongNhanVien, tongNhaCungCap
-    phieuNhapChoDuyet, phieuXuatChoDuyet
-    tongCanhBao, hangTonKhoThap, canhBaoChuaXuLy
--->
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard · Smart Warehouse</title>
-
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet"/>
-
-  <!-- Design system CSS — đây là dòng quan trọng nhất, trước đây bị thiếu -->
+  <title>Smart Warehouse Dashboard</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
   <link rel="stylesheet" th:href="@{/css/style.css}"/>
 </head>
+<body class="zoho-page zoho-landing-body">
 
-<body>
-<!--
-  .layout-wrap — wrapper bao sidebar + main, giống vitrikho và các template khác
--->
-<div class="layout-wrap">
+<header class="zoho-nav">
+  <div class="zoho-nav-inner">
+    <a class="zoho-brand" th:href="@{/dashboard}">Smart Warehouse</a>
+    <nav class="zoho-menu">
+      <a th:href="@{/dashboard}">Features</a>
+      <a th:href="@{/hanghoa}">Quản lý kho</a>
+      <a th:href="@{/baocao/tonkho}">Báo cáo</a>
+      <a th:href="@{/canhbao}">Cảnh báo</a>
+      <a th:href="@{/phieunhap}">Phiếu nhập</a>
+      <a th:href="@{/phieuxuat}">Phiếu xuất</a>
+    </nav>
+    <a class="zoho-sign" th:href="@{/logout}">Đăng xuất</a>
+  </div>
+</header>
 
-  <!-- Sidebar fragment -->
-  <nav th:replace="~{fragments/layout :: sidebar}"></nav>
-
-  <!-- Topbar fragment -->
-  <div th:replace="~{fragments/layout :: topbar}"></div>
-
-  <!-- ═══════════════════════════════════════════════════════════
-       MAIN CONTENT
-  ═══════════════════════════════════════════════════════════ -->
-  <main class="main">
-
-    <!-- Flash message từ redirect -->
-    <div id="flash-msg" th:data-msg="${flash}" style="display:none;"></div>
-
-    <!-- ── Page Header ── -->
-    <div class="page-header reveal">
-      <div class="page-header-left">
-        <h2>📊 Dashboard – Tổng quan</h2>
-        <div class="page-breadcrumb">
-          <span>Trang chủ</span>
-          <span>Tổng quan hệ thống</span>
-        </div>
+<main class="zoho-landing">
+  <section class="zoho-hero-v2 zoho-reveal">
+    <div class="zoho-hero-left zoho-reveal up d1">
+      <div class="zoho-eyebrow">SMART WAREHOUSE PLATFORM</div>
+      <h1>Manage inventory and fulfill orders - the right way</h1>
+      <p>
+        Theo dõi tồn kho, vận hành nhập xuất, kiểm soát cảnh báo và xuất báo cáo
+        trong một nền tảng quản lý kho thống nhất.
+      </p>
+      <div class="zoho-hero-cta">
+        <a class="zoho-btn zoho-btn-primary" th:href="@{/hanghoa}">QUẢN LÝ KHO</a>
+        <a class="zoho-btn zoho-btn-secondary" th:href="@{/baocao/tonkho}">BÁO CÁO KHO</a>
       </div>
-      <div style="font-size:12px;color:var(--txt-3);text-align:right;">
-        <div th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">
-          Thứ Bảy, 25/04/2026
+    </div>
+    <div class="zoho-hero-right zoho-reveal up d2">
+      <div class="zoho-hero-art">
+        <img src="https://www.zoho.com/us/inventory/header.png" alt="Zoho Inventory Hero"/>
+
+        <div class="zoho-float-card fc-sales">
+          <div class="zoho-float-chip chip-red">Sales Order</div>
+          <div class="zoho-float-metric"><b th:text="${phieuXuatChoDuyet}">0</b><span>chờ duyệt</span></div>
+        </div>
+
+        <div class="zoho-float-card fc-pack">
+          <div class="zoho-float-chip chip-blue">To be Packed</div>
+          <div class="zoho-float-metric"><b th:text="${phieuNhapChoDuyet}">0</b><span>phiếu nhập</span></div>
+        </div>
+
+        <div class="zoho-float-card fc-ship">
+          <div class="zoho-float-chip chip-amber">To be Shipped</div>
+          <div class="zoho-float-metric"><b th:text="${tongCanhBao}">0</b><span>cảnh báo</span></div>
+        </div>
+
+        <div class="zoho-float-card fc-deliver">
+          <div class="zoho-float-chip chip-green">To be Delivered</div>
+          <div class="zoho-float-metric"><b th:text="${tongHangHoa}">0</b><span>mặt hàng</span></div>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- ══════════════════════════════════════════════════════════
-         STAT CARDS
-    ══════════════════════════════════════════════════════════ -->
-    <div class="grid-stats">
+  <section class="zoho-trusted zoho-reveal up">
+    <div class="zoho-trusted-title">TRUSTED BY SUCCESSFUL COMPANIES WORLDWIDE</div>
+    <div class="zoho-stats">
+      <div><b th:data-target="${tongHangHoa}">0</b><span>Hàng hóa</span></div>
+      <div><b th:data-target="${tongNhanVien}">0</b><span>Nhân viên</span></div>
+      <div><b th:data-target="${tongNhaCungCap}">0</b><span>Nhà cung cấp</span></div>
+      <div><b th:data-target="${phieuNhapChoDuyet}">0</b><span>Phiếu nhập chờ</span></div>
+      <div><b th:data-target="${phieuXuatChoDuyet}">0</b><span>Phiếu xuất chờ</span></div>
+      <div><b th:data-target="${tongCanhBao}">0</b><span>Cảnh báo mở</span></div>
+    </div>
+  </section>
 
-      <div class="stat-card reveal-scale reveal-d1" style="--accent-color: var(--blue);">
-        <div class="stat-card-bg">📦</div>
-        <div class="stat-num" th:data-target="${tongHangHoa}" data-target="0">0</div>
-        <div class="stat-label">Tổng hàng hóa</div>
-        <div class="stat-trend up"><i class="bi bi-box-seam"></i> Đang quản lý</div>
+  <section class="zoho-feature-intro zoho-reveal up">
+    <div class="zoho-eyebrow center">IT'S TIME TO START RIGHT</div>
+    <h2>Transform the way you manage your inventory</h2>
+    <div class="zoho-feature-cards" data-carousel data-interval="5000">
+      <article class="zoho-reveal up d1">
+        <img src="https://www.zoho.com/us/inventory/feature1.svg" alt="Feature 1" onerror="this.style.display='none'"/>
+        <h3>Sell more with assemblies</h3>
+        <p>Sắp gói nhóm sản phẩm, kiểm soát bộ linh kiện và tối ưu bán hàng theo combo.</p>
+        <a th:href="@{/hanghoa}">Learn More →</a>
+      </article>
+      <article class="zoho-reveal up d2">
+        <img src="https://www.zoho.com/us/inventory/feature2.svg" alt="Feature 2" onerror="this.style.display='none'"/>
+        <h3>Handle sales spikes</h3>
+        <p>Quản lý đột biến đơn xuất, theo dõi trạng thái duyệt và tránh thiếu hàng trong giờ cao điểm.</p>
+        <a th:href="@{/phieuxuat}">Learn More →</a>
+      </article>
+      <article class="zoho-reveal up d3">
+        <img src="https://www.zoho.com/us/inventory/feature3.svg" alt="Feature 3" onerror="this.style.display='none'"/>
+        <h3>Control warehouses</h3>
+        <p>Điều phối hàng theo vị trí kho, chuyển nội bộ và giám sát tồn kho theo khu vực.</p>
+        <a th:href="@{/vitrikho}">Learn More →</a>
+      </article>
+    </div>
+  </section>
+
+  <section class="zoho-red-cta zoho-reveal up">
+    <div class="zoho-red-inner">
+      <div>
+        <div class="zoho-eyebrow">AT YOUR FINGERTIPS</div>
+        <h3>Nắm tồn kho và tăng tốc vận hành doanh nghiệp</h3>
       </div>
-
-      <div class="stat-card reveal-scale reveal-d2" style="--accent-color: var(--green);">
-        <div class="stat-card-bg">👥</div>
-        <div class="stat-num" th:data-target="${tongNhanVien}" data-target="0">0</div>
-        <div class="stat-label">Nhân viên</div>
-        <div class="stat-trend up"><i class="bi bi-people"></i> Đang hoạt động</div>
+      <div class="zoho-hero-cta">
+        <a class="zoho-btn zoho-btn-dark" th:href="@{/phieunhap/add}">TẠO PHIẾU NHẬP</a>
+        <a class="zoho-btn zoho-btn-light" th:href="@{/phieuxuat/add}">TẠO PHIẾU XUẤT</a>
       </div>
+    </div>
+  </section>
 
-      <div class="stat-card reveal-scale reveal-d3" style="--accent-color: var(--yellow);">
-        <div class="stat-card-bg">📥</div>
-        <div class="stat-num" th:data-target="${phieuNhapChoDuyet}" data-target="0">0</div>
-        <div class="stat-label">Phiếu nhập chờ</div>
-        <div class="stat-trend warn"><i class="bi bi-hourglass-split"></i> Chờ duyệt</div>
+  <section class="zoho-function-flow zoho-reveal up">
+    <h2>Everything you need from receiving to shipping</h2>
+    <div class="zoho-flow-row">
+      <div class="zoho-flow-media">
+        <img src="https://www.zoho.com/us/inventory/zom-tab-2x.png" alt="Dashboard module"/>
       </div>
-
-      <div class="stat-card reveal-scale reveal-d4" style="--accent-color: var(--purple);">
-        <div class="stat-card-bg">📤</div>
-        <div class="stat-num" th:data-target="${phieuXuatChoDuyet}" data-target="0">0</div>
-        <div class="stat-label">Phiếu xuất chờ</div>
-        <div class="stat-trend warn"><i class="bi bi-hourglass-split"></i> Chờ duyệt</div>
+      <div class="zoho-flow-copy">
+        <h4>Từ nhập kho đến theo dõi chi tiết</h4>
+        <p>Quản lý phiếu nhập, duyệt theo vai trò, và cộng tồn kho tự động ngay khi hoàn tất.</p>
+        <ul>
+          <li>Tạo nháp phiếu nhập nhanh</li>
+          <li>Luồng duyệt PENDING -> DONE rõ ràng</li>
+          <li>Liên kết nhà cung cấp và hàng hóa</li>
+        </ul>
+        <a th:href="@{/phieunhap}">Learn More →</a>
       </div>
-
-      <div class="stat-card reveal-scale reveal-d5" style="--accent-color: var(--red);">
-        <div class="stat-card-bg">🔔</div>
-        <div class="stat-num" th:data-target="${tongCanhBao}" data-target="0">0</div>
-        <div class="stat-label">Cảnh báo</div>
-        <div class="stat-trend danger"><i class="bi bi-exclamation-triangle"></i> Cần xử lý!</div>
-      </div>
-
     </div>
 
-    <!-- ── Quick Actions ── -->
-    <div class="text-label mb-sm reveal">⚡ Thao tác nhanh</div>
-    <div class="qa-grid mb-lg reveal reveal-d1">
-      <a class="qa-btn" th:href="@{/hanghoa/them}">
-        <span class="qa-btn-icon">📦</span> Thêm hàng hóa
-      </a>
-      <a class="qa-btn" th:href="@{/phieunhap/tao}">
-        <span class="qa-btn-icon">📥</span> Tạo phiếu nhập
-      </a>
-      <a class="qa-btn" th:href="@{/phieuxuat/tao}">
-        <span class="qa-btn-icon">📤</span> Tạo phiếu xuất
-      </a>
-      <a class="qa-btn" th:href="@{/canhbao}">
-        <span class="qa-btn-icon">🔔</span> Xem cảnh báo
-      </a>
-      <a class="qa-btn" th:href="@{/export/excel}">
-        <span class="qa-btn-icon">📊</span> Xuất báo cáo
-      </a>
+    <div class="zoho-flow-row reverse">
+      <div class="zoho-flow-media">
+        <img src="https://www.zoho.com/us/inventory/mb-desktop.png" alt="Inventory desktop view"/>
+      </div>
+      <div class="zoho-flow-copy">
+        <h4>Xuất kho chuẩn xác, cảnh báo chủ động</h4>
+        <p>Kiểm soát xuất bất thường, cập nhật tồn kho tức thì và thông báo các rủi ro cần xử lý.</p>
+        <ul>
+          <li>Quản lý phiếu xuất theo trạng thái</li>
+          <li>Cảnh báo tồn kho thấp / rủi ro</li>
+          <li>Theo dõi lịch sử thao tác toàn hệ thống</li>
+        </ul>
+        <a th:href="@{/canhbao}">Learn More →</a>
+      </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════
-         GRID CHÍNH: Tồn kho thấp + Cảnh báo
-    ══════════════════════════════════════════════════════════ -->
-    <div class="grid-7-5">
-
-      <!-- Bảng hàng tồn kho thấp -->
-      <div class="card reveal reveal-d1">
-        <div class="card-header">
-          <h5>⚠️ Hàng tồn kho thấp</h5>
-          <a class="btn btn-ghost btn-sm" th:href="@{/hanghoa}">
-            Xem tất cả <i class="bi bi-arrow-right"></i>
-          </a>
-        </div>
-        <div class="table-wrap">
-          <table class="tbl">
-            <thead>
-              <tr>
-                <th>Mã hàng</th>
-                <th>Tên hàng</th>
-                <th>Tồn / Tối thiểu</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="item : ${hangTonKhoThap}" class="reveal">
-                <td><code class="mono text-blue" th:text="${item.maHang}">HH001</code></td>
-                <td>
-                  <strong th:text="${item.tenHang}">Tên hàng</strong>
-                </td>
-                <td>
-                  <div class="flex-center gap-2">
-                    <span th:class="${item.soLuongTon <= item.soLuongToiThieu * 0.3 ? 'text-red fw-700' : 'text-yellow fw-700'}"
-                          th:text="${item.soLuongTon}">2</span>
-                    <span class="text-dim">/</span>
-                    <span class="text-dim" th:text="${item.soLuongToiThieu}">10</span>
-                    <div class="stock-bar" style="flex:1;min-width:50px;">
-                      <div class="stock-fill"
-                           th:class="${'stock-fill ' + (item.soLuongTon * 100 / item.soLuongToiThieu <= 30 ? 'low' : item.soLuongTon * 100 / item.soLuongToiThieu <= 60 ? 'warn' : 'ok')}"
-                           th:data-width="${item.soLuongToiThieu > 0 ? (item.soLuongTon * 100 / item.soLuongToiThieu > 100 ? 100 : item.soLuongTon * 100 / item.soLuongToiThieu) : 0}"
-                           style="width:0%;">
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span th:class="${'badge ' + (item.soLuongTon <= item.soLuongToiThieu * 0.3 ? 'badge-low' : 'badge-warn')}"
-                        th:text="${item.soLuongTon <= item.soLuongToiThieu * 0.3 ? '⚠ Cần nhập' : '⚡ Sắp hết'}"
-                    ⚠ Cần nhập
-                  </span>
-                </td>
-              </tr>
-              <tr th:if="${hangTonKhoThap == null or hangTonKhoThap.isEmpty()}">
-                <td colspan="4" style="text-align:center;padding:24px;color:var(--txt-3);">
-                  ✅ Không có hàng nào dưới mức tối thiểu
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+    <div class="zoho-flow-row">
+      <div class="zoho-flow-media">
+        <img src="https://www.zoho.com/us/inventory/mb-mobile.png" alt="Inventory mobile view"/>
       </div>
+      <div class="zoho-flow-copy">
+        <h4>Vị trí kho và báo cáo quản trị</h4>
+        <p>Phân khu hàng hóa, theo dõi công suất vị trí kho và xuất báo cáo phục vụ quyết định.</p>
+        <ul>
+          <li>Quản lý vị trí kho theo khu vực</li>
+          <li>Báo cáo tồn kho, nhập kho, xuất kho</li>
+          <li>Dashboard chỉ số vận hành theo thời gian thực</li>
+        </ul>
+        <a th:href="@{/baocao/tonkho}">Learn More →</a>
+      </div>
+    </div>
+  </section>
 
-      <!-- Cảnh báo gần đây -->
-      <div class="card reveal reveal-d2">
-        <div class="card-header">
-          <h5>🔔 Cảnh báo gần đây</h5>
-          <a class="btn btn-ghost btn-sm" th:href="@{/canhbao}">
-            Xem tất cả <i class="bi bi-arrow-right"></i>
-          </a>
-        </div>
-        <div class="card-body">
+  <section class="zoho-recognized zoho-reveal up">
+    <div class="zoho-eyebrow center">AS RECOGNIZED BY</div>
+    <div class="zoho-badges">
+      <img src="https://www.zoho.com/us/inventory/capterra.svg" alt="Capterra" onerror="this.style.display='none'"/>
+      <img src="https://www.zoho.com/us/inventory/getapp.svg" alt="GetApp" onerror="this.style.display='none'"/>
+      <img src="https://www.zoho.com/us/inventory/software-suggest.svg" alt="Software Suggest" onerror="this.style.display='none'"/>
+    </div>
+  </section>
 
-          <div th:each="alert : ${canhBaoChuaXuLy}" class="alert-item reveal">
-            <div th:class="${'alert-dot ' + (alert.loaiCanhBao == 'TON_KHO_THAP' ? 'red' : alert.loaiCanhBao == 'HAN_SU_DUNG' ? 'yellow' : alert.loaiCanhBao == 'XUAT_BAT_THUONG' ? 'orange' : 'blue')}">
-            </div>
-            <div class="alert-content">
-              <strong th:text="${alert.tieuDe}">Cảnh báo</strong>
-              <p th:text="${alert.moTa}"></p>
-            </div>
-            <div class="alert-time" th:text="${#temporals.format(alert.thoiGian, 'HH:mm')}"></div>
+  <section class="zoho-red-feature zoho-reveal up">
+    <div class="zoho-red-feature-inner">
+      <div>
+        <div class="zoho-eyebrow">AT YOUR FINGERTIPS</div>
+        <h3>Know your inventory and grow your business</h3>
+      </div>
+      <div class="zoho-hero-cta">
+        <a class="zoho-btn zoho-btn-dark" th:href="@{/hanghoa}">XEM TỒN KHO</a>
+        <a class="zoho-btn zoho-btn-light" th:href="@{/canhbao}">XEM CẢNH BÁO</a>
+      </div>
+    </div>
+    <div class="zoho-red-floating">
+      <div>
+        <h5>Quản trị kho thực chiến</h5>
+        <ul>
+          <li>Kiểm soát tồn kho theo thời gian thực</li>
+          <li>Duyệt phiếu nhập/xuất theo vai trò</li>
+          <li>Đẩy cảnh báo tồn thấp tức thì</li>
+        </ul>
+      </div>
+      <div>
+        <h5>Tối ưu vận hành</h5>
+        <ul>
+          <li>Quản lý vị trí kho theo khu vực</li>
+          <li>Theo dõi lịch sử thao tác minh bạch</li>
+          <li>Báo cáo tồn, nhập, xuất theo kỳ</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="zoho-everything zoho-reveal up">
+    <h2>Everything you need from sales to shipping</h2>
+    <div class="zoho-everything-row">
+      <div class="zoho-everything-img">
+        <img src="https://www.zoho.com/us/inventory/header.webp" alt="Inventory process visual"/>
+      </div>
+      <div class="zoho-everything-copy">
+        <h4>Multichannel selling made easy</h4>
+        <p>Kết nối luồng hàng hóa từ nhập kho đến xuất kho, theo dõi trạng thái và đối soát nhanh.</p>
+        <ul>
+          <li>Phiếu nhập chuẩn hóa theo NCC</li>
+          <li>Duyệt phiếu xuất theo phân quyền</li>
+          <li>Cảnh báo rủi ro và tồn thấp tự động</li>
+        </ul>
+        <a th:href="@{/phieuxuat}">Learn More →</a>
+      </div>
+    </div>
+    <div class="zoho-everything-row reverse">
+      <div class="zoho-everything-img">
+        <img src="https://www.zoho.com/us/inventory/mobile-banner-img.png" alt="Operations visual"/>
+      </div>
+      <div class="zoho-everything-copy">
+        <h4>From packing to tracking, it's all here</h4>
+        <p>Dashboard tổng hợp số liệu giúp đội vận hành theo dõi năng suất và ra quyết định nhanh.</p>
+        <ul>
+          <li>Thống kê hàng hóa và cảnh báo mở</li>
+          <li>Báo cáo nhập/xuất xuất file Excel</li>
+          <li>Truy xuất lịch sử thao tác đầy đủ</li>
+        </ul>
+        <a th:href="@{/lichsu}">Learn More →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="zoho-flexible zoho-reveal up">
+    <div class="zoho-flexible-box">
+      <div class="zoho-eyebrow">WORK THE WAY YOU NEED</div>
+      <h3>It's flexible. It's extensible. It's made to work with your needs.</h3>
+      <div class="zoho-flexible-grid" id="zohoFlex">
+        <div class="zoho-flex-tabs" role="tablist" aria-label="Flexible features">
+          <button class="zoho-flex-tab active" type="button" data-tab="custom-func" role="tab" aria-selected="true">
+            <div class="t-title">Personalized workflows</div>
+            <div class="t-desc">Thiết kế luồng duyệt và thao tác theo vai trò: admin / quản lý / nhân viên.</div>
+          </button>
+          <button class="zoho-flex-tab" type="button" data-tab="webhook" role="tab" aria-selected="false">
+            <div class="t-title">Custom updates</div>
+            <div class="t-desc">Tự động cập nhật tồn kho, cảnh báo và KPI theo trạng thái phiếu.</div>
+          </button>
+          <button class="zoho-flex-tab" type="button" data-tab="workflow" role="tab" aria-selected="false">
+            <div class="t-title">Webhooks & integrations</div>
+            <div class="t-desc">Sẵn sàng nối ERP/CRM/BI để theo dõi kho và vận hành tập trung.</div>
+          </button>
+
+          <div class="zoho-flex-progress" aria-hidden="true">
+            <span class="zoho-flex-progress-bar" id="zohoFlexBar"></span>
           </div>
-
-          <!-- Fallback — đã sửa: kiểm tra canhBaoChuaXuLy thay vì recentAlerts -->
-          <div th:if="${canhBaoChuaXuLy == null or canhBaoChuaXuLy.isEmpty()}">
-            <div class="alert-item">
-              <div class="alert-dot red"></div>
-              <div class="alert-content">
-                <strong>🔴 Tồn kho cực thấp</strong>
-                <p>Laptop Dell XPS 15 còn 2 chiếc</p>
-              </div>
-              <div class="alert-time">2 phút</div>
-            </div>
-            <div class="alert-item">
-              <div class="alert-dot yellow"></div>
-              <div class="alert-content">
-                <strong>🟡 Hàng sắp hết hạn</strong>
-                <p>Sữa TH True Milk còn 12 ngày</p>
-              </div>
-              <div class="alert-time">1 giờ</div>
-            </div>
-            <div class="alert-item">
-              <div class="alert-dot orange"></div>
-              <div class="alert-content">
-                <strong>🟠 Xuất bất thường</strong>
-                <p>NV023 xuất 50 SSD trong 1 lần</p>
-              </div>
-              <div class="alert-time">3 giờ</div>
-            </div>
-            <div class="alert-item">
-              <div class="alert-dot red"></div>
-              <div class="alert-content">
-                <strong>🔴 Tồn kho thấp</strong>
-                <p>Cáp USB Type-C còn 3 chiếc</p>
-              </div>
-              <div class="alert-time">5 giờ</div>
-            </div>
-            <div class="alert-item">
-              <div class="alert-dot blue"></div>
-              <div class="alert-content">
-                <strong>🔵 Phiếu chờ duyệt lâu</strong>
-                <p>PN-2024-038 từ Thành Nam Corp</p>
-              </div>
-              <div class="alert-time">Hôm qua</div>
-            </div>
-          </div>
-
         </div>
-      </div>
 
-    </div><!-- /.grid-7-5 -->
-
-    <!-- ══════════════════════════════════════════════════════════
-         CANVAS WIDGET — Lerp dot + Bezier trail
-    ══════════════════════════════════════════════════════════ -->
-    <div class="card reveal" style="margin-top:18px;">
-      <div class="card-header">
-        <h5>🌐 Network Activity Monitor</h5>
-        <span class="text-xs" style="color:var(--green);">
-          <i class="bi bi-circle-fill" style="font-size:8px;"></i>
-          Live · Di chuột vào để tương tác
-        </span>
-      </div>
-      <div style="position:relative;height:220px;overflow:hidden;cursor:crosshair;"
-           id="canvas-widget-wrap">
-        <canvas id="canvas-widget"
-                style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
-        <div style="position:absolute;inset:0;display:flex;flex-direction:column;
-                    align-items:center;justify-content:center;
-                    pointer-events:none;text-align:center;">
-          <div style="font-size:11px;color:rgba(255,255,255,0.15);
-                      font-family:'JetBrains Mono',monospace;letter-spacing:2px;">
-            WAREHOUSE NETWORK
-          </div>
-          <div style="font-size:28px;font-weight:900;color:rgba(255,255,255,0.06);
-                      font-family:'Space Grotesk',sans-serif;
-                      letter-spacing:-0.03em;margin-top:4px;">
-            SMART KHO
-          </div>
+        <div class="zoho-flex-media" aria-label="Flexible feature preview">
+          <img class="zoho-flex-img active" data-tab-img="custom-func" src="https://www.zoho.com/us/inventory/custom-func.png" alt="Personalized workflows"/>
+          <img class="zoho-flex-img" data-tab-img="webhook" src="https://www.zoho.com/us/inventory/webhook.png" alt="Custom updates"/>
+          <img class="zoho-flex-img" data-tab-img="workflow" src="https://www.zoho.com/us/inventory/workflow.png" alt="Webhooks and workflow"/>
         </div>
       </div>
     </div>
+  </section>
 
-    <div class="page-footer">
-      🏭 Smart Warehouse Management System &nbsp;·&nbsp;
-      OOP Project 2025 &nbsp;·&nbsp;
-      Java Spring Boot + Thymeleaf + MySQL (Aiven)
+  <section class="zoho-integrations zoho-reveal up">
+    <h2>Tightly integrated with apps to manage every angle of your business</h2>
+    <div class="zoho-integration-grid">
+      <span>ERP</span><span>CRM</span><span>POS</span><span>E-Commerce</span><span>Shipping</span><span>Analytics</span>
+      <span>Finance</span><span>Email</span><span>Chat</span><span>Support</span><span>Docs</span><span>Automation</span>
     </div>
+  </section>
+</main>
+ <section class="zoho-integrations zoho-reveal up" style="margin-top:0;">
+  <div style="background:#080c14;border-radius:10px;overflow:hidden;position:relative;
+              height:240px;cursor:crosshair;" id="cWrap">
+    <canvas id="cMain" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;
+                align-items:center;justify-content:center;pointer-events:none;text-align:center;">
+      <span style="font-size:11px;color:rgba(255,255,255,.12);letter-spacing:3px;font-family:monospace;">WAREHOUSE NETWORK</span>
+      <span style="font-size:30px;font-weight:900;color:rgba(255,255,255,.05);letter-spacing:-.03em;margin-top:4px;">SMART KHO</span>
+    </div>
+    <div style="position:absolute;bottom:10px;right:14px;font-size:11px;color:#3d5a52;
+                display:flex;align-items:center;gap:5px;pointer-events:none;">
+      <span style="width:7px;height:7px;border-radius:50%;background:#10b981;
+                   display:inline-block;box-shadow:0 0 6px #10b981;"></span>
+      Live · Di chuột vào để tương tác
+    </div>
+  </div>
+</section>
+</main>
+ 
+<footer class="zoho-dark-footer zoho-reveal up">
+  <div class="zoho-footer-inner">
+    <div>
+      <h4>Quản lý kho</h4>
+      <a th:href="@{/hanghoa}">Hàng hóa</a>
+      <a th:href="@{/nhacungcap}">Nhà cung cấp</a>
+      <a th:href="@{/vitrikho}">Vị trí kho</a>
+    </div>
+    <div>
+      <h4>Nghiệp vụ</h4>
+      <a th:href="@{/phieunhap}">Phiếu nhập</a>
+      <a th:href="@{/phieuxuat}">Phiếu xuất</a>
+      <a th:href="@{/canhbao}">Cảnh báo</a>
+    </div>
+    <div>
+      <h4>Báo cáo</h4>
+      <a th:href="@{/baocao/tonkho}">Tồn kho</a>
+      <a th:href="@{/baocao/phieunhap}">Phiếu nhập</a>
+      <a th:href="@{/baocao/phieuxuat}">Phiếu xuất</a>
+    </div>
+    <div>
+      <h4>Tài khoản</h4>
+      <span th:text="${currentUser != null ? currentUser.hoTen : 'Người dùng'}">User</span>
+      <span th:text="${currentUser != null ? currentUser.vaiTro : ''}">Role</span>
+      <a th:href="@{/logout}">Đăng xuất</a>
+    </div>
+  </div>
+</footer>
 
-  </main>
-</div><!-- /.layout-wrap -->
-
-<!-- Toast + Scripts fragments -->
-<div th:replace="~{fragments/layout :: toastArea}"></div>
-<div th:replace="~{fragments/layout :: scripts}"></div>
-
-<!-- Canvas animation script — chỉ chạy trên dashboard -->
+<script th:src="@{/js/app.js}"></script>
 <script>
-(function () {
-  const wrap   = document.getElementById('canvas-widget-wrap');
-  const canvas = document.getElementById('canvas-widget');
-  if (!wrap || !canvas) return;
-  const ctx = canvas.getContext('2d');
+  (function () {
+    if (!window.IntersectionObserver) {
+      document.querySelectorAll('.zoho-reveal').forEach(el => el.classList.add('in'));
+      return;
+    }
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in');
+        io.unobserve(e.target);
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+    document.querySelectorAll('.zoho-reveal').forEach(el => io.observe(el));
+  })();
+</script>
 
-  function resize() {
-    canvas.width  = wrap.offsetWidth;
-    canvas.height = wrap.offsetHeight;
+<script>
+  (function () {
+    const root = document.getElementById('zohoFlex');
+    if (!root) return;
+
+    const tabs = Array.from(root.querySelectorAll('.zoho-flex-tab'));
+    const imgs = Array.from(root.querySelectorAll('.zoho-flex-img'));
+    const bar = document.getElementById('zohoFlexBar');
+
+    let idx = 0;
+    const DURATION = 8000;
+    let timer = null;
+    let raf = null;
+    let startedAt = 0;
+    let pausedAt = 0;
+
+    function setActive(tabKey) {
+      tabs.forEach((t) => {
+        const active = t.dataset.tab === tabKey;
+        t.classList.toggle('active', active);
+        t.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      imgs.forEach((img) => img.classList.toggle('active', img.dataset.tabImg === tabKey));
+    }
+
+    function startBar() {
+      if (!bar) return;
+      bar.style.transition = 'none';
+      bar.style.width = '0%';
+      // force reflow
+      void bar.offsetWidth;
+      bar.style.transition = `width ${DURATION}ms linear`;
+      bar.style.width = '100%';
+    }
+
+    function next() {
+      idx = (idx + 1) % tabs.length;
+      const key = tabs[idx].dataset.tab;
+      setActive(key);
+      startBar();
+      startedAt = performance.now();
+    }
+
+    function play() {
+      stop();
+      const key = tabs[idx].dataset.tab;
+      setActive(key);
+      startBar();
+      startedAt = performance.now();
+      timer = window.setInterval(next, DURATION);
+    }
+
+    function stop() {
+      if (timer) window.clearInterval(timer);
+      timer = null;
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    }
+
+    function pause() {
+      if (!bar) return;
+      pausedAt = performance.now();
+      const elapsed = pausedAt - startedAt;
+      const pct = Math.min(100, Math.max(0, (elapsed / DURATION) * 100));
+      bar.style.transition = 'none';
+      bar.style.width = `${pct}%`;
+      stop();
+    }
+
+    function resume() {
+      if (!bar) return;
+      const now = performance.now();
+      const elapsedBeforePause = pausedAt - startedAt;
+      const remaining = Math.max(0, DURATION - elapsedBeforePause);
+
+      bar.style.transition = 'none';
+      // keep current width
+      const currentWidth = bar.style.width || '0%';
+      void bar.offsetWidth;
+      bar.style.transition = `width ${remaining}ms linear`;
+      bar.style.width = '100%';
+      startedAt = now - elapsedBeforePause;
+
+      stop();
+      timer = window.setInterval(next, remaining);
+    }
+
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => {
+        idx = i;
+        const key = t.dataset.tab;
+        setActive(key);
+        play();
+      });
+    });
+
+    root.addEventListener('mouseenter', pause);
+    root.addEventListener('mouseleave', resume);
+
+    play();
+  })();
+</script>
+<script>
+(function(){
+  var wrap = document.getElementById('cWrap');
+  var cv   = document.getElementById('cMain');
+  var ctx  = cv.getContext('2d');
+
+  function resize(){
+    cv.width  = wrap.offsetWidth;
+    cv.height = wrap.offsetHeight;
   }
   resize();
   window.addEventListener('resize', resize);
 
-  const stars = Array.from({ length: 80 }, () => ({
-    x: Math.random(), y: Math.random(),
-    r: Math.random() + 0.2,
-    baseA: Math.random() * 0.4 + 0.05,
-    phase: Math.random() * Math.PI * 2,
-    spd: Math.random() * 0.01 + 0.004
-  }));
+  var stars = [];
+  for(var i=0;i<90;i++){
+    stars.push({
+      x: Math.random(), y: Math.random(),
+      r: Math.random()*0.6+0.2,
+      a: Math.random()*0.35+0.05,
+      ph: Math.random()*Math.PI*2,
+      sp: Math.random()*0.008+0.003
+    });
+  }
 
-  const LERP  = 0.07;
-  const dot   = { x: 0, y: 0 };
-  const mouse = { x: 0, y: 0, inside: false };
+  var NODES = [];
+  for(var j=0;j<8;j++){
+    NODES.push({
+      x: 0.08+Math.random()*0.84,
+      y: 0.12+Math.random()*0.76,
+      ph: Math.random()*Math.PI*2,
+      sp: Math.random()*0.018+0.008
+    });
+  }
 
-  wrap.addEventListener('mousemove', e => {
-    const r = wrap.getBoundingClientRect();
-    mouse.x = e.clientX - r.left;
-    mouse.y = e.clientY - r.top;
-    mouse.inside = true;
-  });
-  wrap.addEventListener('mouseleave', () => { mouse.inside = false; });
-
-  const trail = Array.from({ length: 24 }, () => ({ x: 0, y: 0 }));
-
-  const NODES = Array.from({ length: 7 }, () => ({
-    x: 0.1 + Math.random() * 0.8,
-    y: 0.15 + Math.random() * 0.7,
-    pulse: Math.random() * Math.PI * 2,
-    spd: Math.random() * 0.02 + 0.01
-  }));
-
-  function drawHex(cx, cy, size) {
+  function hex(cx,cy,sz){
     ctx.beginPath();
-    for (let i = 0; i < 6; i++) {
-      const a = (Math.PI / 180) * (60 * i - 30);
-      i === 0 ? ctx.moveTo(cx + size * Math.cos(a), cy + size * Math.sin(a))
-              : ctx.lineTo(cx + size * Math.cos(a), cy + size * Math.sin(a));
+    for(var i=0;i<6;i++){
+      var a=(Math.PI/180)*(60*i-30);
+      var px=cx+sz*Math.cos(a), py=cy+sz*Math.sin(a);
+      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
     }
     ctx.closePath();
   }
 
-  let t = 0;
-  function draw() {
+  var LERP  = 0.06;
+  var dot   = {x:-1,y:-1};
+  var mouse = {x:0,y:0,in:false};
+  var trail = [];
+  for(var k=0;k<28;k++) trail.push({x:0,y:0});
+  var idleT = 0;
+
+  wrap.addEventListener('mouseenter', function(){ mouse.in = true; });
+  wrap.addEventListener('mouseleave', function(){ mouse.in = false; });
+  wrap.addEventListener('mousemove', function(e){
+    var r = wrap.getBoundingClientRect();
+    mouse.x = e.clientX - r.left;
+    mouse.y = e.clientY - r.top;
+    mouse.in = true;
+  });
+
+  var t = 0;
+  function draw(){
     t++;
-    const W = canvas.width, H = canvas.height;
-    if (t === 1) { dot.x = W / 2; dot.y = H / 2; trail.forEach(p => { p.x = dot.x; p.y = dot.y; }); }
+    var W=cv.width, H=cv.height;
+    if(dot.x<0){ dot.x=W/2; dot.y=H/2; for(var i=0;i<trail.length;i++){trail[i].x=dot.x;trail[i].y=dot.y;} }
 
-    ctx.fillStyle = '#080c14';
-    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle='#080c14';
+    ctx.fillRect(0,0,W,H);
 
-    stars.forEach(s => {
+    for(var i=0;i<stars.length;i++){
+      var s=stars[i];
       ctx.beginPath();
-      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(180,210,255,${s.baseA * (0.5 + 0.5 * Math.sin(t * s.spd + s.phase))})`;
+      ctx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
+      ctx.fillStyle='rgba(180,210,255,'+(s.a*(0.5+0.5*Math.sin(t*s.sp+s.ph)))+')';
       ctx.fill();
-    });
-
-    NODES.forEach(n => {
-      const nx = n.x * W, ny = n.y * H;
-      const p  = 0.6 + 0.4 * Math.sin(t * n.spd + n.pulse);
-      const d  = Math.hypot(dot.x - nx, dot.y - ny);
-      if (d < 120) {
-        ctx.beginPath(); ctx.moveTo(dot.x, dot.y); ctx.lineTo(nx, ny);
-        ctx.strokeStyle = `rgba(99,200,255,${(1 - d / 120) * 0.4})`; ctx.lineWidth = 0.8; ctx.stroke();
-      }
-      drawHex(nx, ny, 6 * p);
-      ctx.strokeStyle = `rgba(59,130,246,${0.25 * p})`; ctx.lineWidth = 1; ctx.stroke();
-      ctx.beginPath(); ctx.arc(nx, ny, 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(99,180,255,${0.5 * p})`; ctx.fill();
-    });
-
-    for (let i = 0; i < trail.length - 1; i++) {
-      const tt   = i / (trail.length - 1);
-      const mx   = (trail[i].x + trail[i+1].x) / 2, my = (trail[i].y + trail[i+1].y) / 2;
-      const ni   = Math.min(i + 2, trail.length - 1);
-      const nmx  = (trail[i+1].x + trail[ni].x) / 2, nmy = (trail[i+1].y + trail[ni].y) / 2;
-      ctx.beginPath(); ctx.moveTo(mx, my);
-      ctx.quadraticCurveTo(trail[i+1].x, trail[i+1].y, nmx, nmy);
-      ctx.strokeStyle = `rgba(99,200,255,${(1 - tt) * 0.5})`;
-      ctx.lineWidth = (1 - tt) * 2; ctx.lineCap = 'round'; ctx.stroke();
     }
 
-    const tx = mouse.inside ? mouse.x : W / 2, ty = mouse.inside ? mouse.y : H / 2;
-    dot.x += (tx - dot.x) * LERP; dot.y += (ty - dot.y) * LERP;
-    trail.unshift({ x: dot.x, y: dot.y }); trail.pop();
+    for(var i=0;i<NODES.length;i++){
+      var n=NODES[i];
+      var nx=n.x*W, ny=n.y*H;
+      var p=0.55+0.45*Math.sin(t*n.sp+n.ph);
+      var d=Math.hypot(dot.x-nx, dot.y-ny);
+      if(d<140){
+        ctx.beginPath(); ctx.moveTo(dot.x,dot.y); ctx.lineTo(nx,ny);
+        ctx.strokeStyle='rgba(99,200,255,'+((1-d/140)*0.5)+')';
+        ctx.lineWidth=0.8; ctx.stroke();
+      }
+      hex(nx,ny,7*p);
+      ctx.strokeStyle='rgba(59,130,246,'+(0.3*p)+')';
+      ctx.lineWidth=1; ctx.stroke();
+      ctx.beginPath(); ctx.arc(nx,ny,2,0,Math.PI*2);
+      ctx.fillStyle='rgba(99,180,255,'+(0.6*p)+')';
+      ctx.fill();
+    }
+
+    for(var i=0;i<trail.length-1;i++){
+      var tt=i/(trail.length-1);
+      var mx=(trail[i].x+trail[i+1].x)/2, my=(trail[i].y+trail[i+1].y)/2;
+      var ni=Math.min(i+2,trail.length-1);
+      var nmx=(trail[i+1].x+trail[ni].x)/2, nmy=(trail[i+1].y+trail[ni].y)/2;
+      ctx.beginPath(); ctx.moveTo(mx,my);
+      ctx.quadraticCurveTo(trail[i+1].x,trail[i+1].y, nmx,nmy);
+      ctx.strokeStyle='rgba(99,200,255,'+((1-tt)*0.55)+')';
+      ctx.lineWidth=(1-tt)*2.5; ctx.lineCap='round'; ctx.stroke();
+    }
+
+    var tx, ty;
+    if(mouse.in){
+      tx=mouse.x; ty=mouse.y;
+    } else {
+      idleT += 0.012;
+      tx = W/2 + Math.cos(idleT)*W*0.25;
+      ty = H/2 + Math.sin(idleT*0.7)*H*0.22;
+    }
+    dot.x += (tx-dot.x)*LERP;
+    dot.y += (ty-dot.y)*LERP;
+    trail.unshift({x:dot.x, y:dot.y});
+    trail.pop();
 
     ctx.save();
-    ctx.shadowBlur = 18; ctx.shadowColor = 'rgba(99,200,255,0.85)';
-    [[6, 'rgba(99,200,255,0.18)'], [4, 'rgba(140,220,255,0.9)'], [1.8, 'rgba(255,255,255,1)']].forEach(([r, c]) => {
-      ctx.beginPath(); ctx.arc(dot.x, dot.y, r, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
-    });
+    ctx.shadowBlur=22; ctx.shadowColor='rgba(99,200,255,0.9)';
+    ctx.beginPath(); ctx.arc(dot.x,dot.y,6,0,Math.PI*2);
+    ctx.fillStyle='rgba(99,200,255,0.15)'; ctx.fill();
+    ctx.shadowBlur=14;
+    ctx.beginPath(); ctx.arc(dot.x,dot.y,3.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(140,220,255,0.85)'; ctx.fill();
+    ctx.shadowBlur=8;
+    ctx.beginPath(); ctx.arc(dot.x,dot.y,1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,1)'; ctx.fill();
     ctx.restore();
 
     requestAnimationFrame(draw);

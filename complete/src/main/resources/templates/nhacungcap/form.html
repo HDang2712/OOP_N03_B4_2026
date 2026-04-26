@@ -14,7 +14,7 @@
   <nav th:replace="~{fragments/layout :: sidebar}"></nav>
   <div th:replace="~{fragments/layout :: topbar}"></div>
 
-  <main class="main">
+  <main class="main ethi-subpage">
     <div class="page-header">
       <div>
         <h2 th:text="${nhaCungCap != null} ? '✏️ Sửa nhà cung cấp' : '🏢 Thêm nhà cung cấp mới'">Form</h2>
@@ -91,6 +91,5 @@
 
 <div th:replace="~{fragments/layout :: toastArea}"></div>
 <div th:replace="~{fragments/layout :: scripts}"></div>
-<script th:src="@{/js/app.js}" defer></script>
 </body>
 </html>

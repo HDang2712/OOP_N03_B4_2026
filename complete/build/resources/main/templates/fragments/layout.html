@@ -93,7 +93,7 @@
 
       <a class="sb-item"
          th:classappend="${pageId == 'vitri'} ? 'active' : ''"
-         th:href="@{/vitri}">
+         th:href="@{/vitrikho}">
         <i class="bi bi-geo-alt"></i>
         Vị trí kho
       </a>
@@ -106,7 +106,7 @@
         <!-- Badge số phiếu chờ — Controller truyền qua model -->
         <span class="sb-badge yellow"
               th:if="${phieuNhapChoDuyet!= null and phieuNhapChoDuyet> 0}"
-              th:text="${pendingImports}">3</span>
+              th:text="${phieuNhapChoDuyet}">3</span>
       </a>
 
       <a class="sb-item"
@@ -116,7 +116,7 @@
         Phiếu xuất
         <span class="sb-badge yellow"
               th:if="${phieuXuatChoDuyet!= null and phieuXuatChoDuyet> 0}"
-              th:text="${pendingExports}">1</span>
+              th:text="${phieuXuatChoDuyet}">1</span>
       </a>
 
       <a class="sb-item"
@@ -127,21 +127,25 @@
         <!-- Badge đỏ nếu có cảnh báo chưa xử lý -->
         <span class="sb-badge red"
               th:if="${tongCanhBao!= null and tongCanhBao> 0}"
-              th:text="${activeAlerts}">5</span>
+              th:text="${tongCanhBao}">5</span>
       </a>
 
       <!-- ── Quản trị — chỉ hiện với Admin/Quản lý ── -->
       <div class="sb-section"
            th:if="${currentUser != null and
                    (currentUser.vaiTro == 'ADMIN' or
-                    currentUser.vaiTro == 'QUAN_LY')}">
+                    currentUser.vaiTro == 'QUAN_LY' or
+                    currentUser.vaiTro == 'admin' or
+                    currentUser.vaiTro == 'quan_ly')}">
         Quản trị
       </div>
 
       <a class="sb-item"
          th:if="${currentUser != null and
                   (currentUser.vaiTro == 'ADMIN' or
-                   currentUser.vaiTro == 'QUAN_LY')}"
+                   currentUser.vaiTro == 'QUAN_LY' or
+                   currentUser.vaiTro == 'admin' or
+                   currentUser.vaiTro == 'quan_ly')}"
          th:classappend="${pageId == 'nhanvien'} ? 'active' : ''"
          th:href="@{/nhanvien}">
         <i class="bi bi-people"></i>
@@ -149,7 +153,7 @@
       </a>
 
       <a class="sb-item"
-         th:if="${currentUser != null and currentUser.vaiTro == 'ADMIN'}"
+         th:if="${currentUser != null and (currentUser.vaiTro == 'ADMIN' or currentUser.vaiTro == 'admin')}"
          th:classappend="${pageId == 'lichsu'} ? 'active' : ''"
          th:href="@{/lichsu}">
         <i class="bi bi-clock-history"></i>
@@ -329,6 +333,22 @@
 <div th:fragment="toastArea">
   <div id="toast"></div>
   <div id="flash-msg" th:data-msg="${flash}" style="display:none;"></div>
+</div>
+
+<div th:fragment="deleteModal">
+  <div class="modal-overlay" id="delete-modal">
+    <div class="modal">
+      <div class="modal-icon">🗑️</div>
+      <div class="modal-title">Xác nhận xóa</div>
+      <div class="modal-msg">Bạn có chắc muốn xóa</div>
+      <div class="modal-name" id="delete-modal-name"></div>
+      <div class="modal-sub">Hành động này không thể hoàn tác!</div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" style="flex:1" onclick="closeDeleteModal()">Hủy bỏ</button>
+        <a class="btn btn-danger" style="flex:1;justify-content:center" id="delete-modal-confirm">Xóa ngay</a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div th:fragment="scripts">

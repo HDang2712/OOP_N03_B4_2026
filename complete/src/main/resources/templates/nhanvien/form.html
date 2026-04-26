@@ -14,7 +14,7 @@
   <nav th:replace="~{fragments/layout :: sidebar}"></nav>
   <div th:replace="~{fragments/layout :: topbar}"></div>
 
-  <main class="main">
+  <main class="main ethi-subpage">
     <div class="page-header">
       <div>
         <h2 th:text="${nhanVien != null} ? '✏️ Sửa nhân viên' : '👥 Thêm nhân viên mới'">Form</h2>
@@ -114,7 +114,6 @@
 
 <div th:replace="~{fragments/layout :: toastArea}"></div>
 <div th:replace="~{fragments/layout :: scripts}"></div>
-<script th:src="@{/js/app.js}" defer></script>
 <script>
   function togglePwd() {
     const inp = document.getElementById('pwd-inp');

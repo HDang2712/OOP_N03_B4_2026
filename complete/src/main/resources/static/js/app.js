@@ -208,3 +208,44 @@ document.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeDeleteModal();
 });
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   7. CAROUSEL — Tự động rotate feature cards theo tuần hoàn
+      Dùng: <section class="zoho-feature-cards" data-carousel data-interval="4000">
+      JS sẽ tự động rotate các article trong section
+      Opacity smooth transition, scale transform cho effect nhẹ
+   ═══════════════════════════════════════════════════════════════════════ */
+(function initCarousel() {
+  const carousel = document.querySelector('[data-carousel]');
+  if (!carousel) return;
+
+  const articles = carousel.querySelectorAll('article');
+  if (articles.length < 2) return;
+
+  let current = 0;
+  const interval = parseInt(carousel.dataset.interval || '4000', 10);
+
+  function rotate() {
+    articles.forEach((article, idx) => {
+      if (idx === current) {
+        article.style.opacity = '1';
+        article.style.transform = 'scale(1)';
+        article.style.pointerEvents = 'auto';
+      } else {
+        article.style.opacity = '0.5';
+        article.style.transform = 'scale(0.98)';
+        article.style.pointerEvents = 'none';
+      }
+    });
+    current = (current + 1) % articles.length;
+  }
+
+  /* Rotateemé setup transitions smooth */
+  articles.forEach(article => {
+    article.style.transition = 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out';
+  });
+
+  rotate();
+  setInterval(rotate, interval);
+})();

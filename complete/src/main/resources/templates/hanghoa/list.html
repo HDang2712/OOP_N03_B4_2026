@@ -14,7 +14,7 @@
   <nav th:replace="~{fragments/layout :: sidebar}"></nav>
   <div th:replace="~{fragments/layout :: topbar}"></div>
 
-  <main class="main">
+  <main class="main ethi-subpage">
 
     <!-- Page Header -->
     <div class="page-header">
@@ -173,8 +173,6 @@
 <div th:replace="~{fragments/layout :: toastArea}"></div>
 <div th:replace="~{fragments/layout :: deleteModal}"></div>
 <div th:replace="~{fragments/layout :: scripts}"></div>
-<script th:src="@{/js/app.js}" defer></script>
-
 <script>
   /* Filter theo phân loại và tồn kho kết hợp */
   function applyFilters() {
